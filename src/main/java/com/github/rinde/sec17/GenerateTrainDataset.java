@@ -20,10 +20,10 @@ import static java.util.Arrays.asList;
 import com.github.rinde.datgen.pdptw.DatasetGenerator;
 
 /**
- * 
+ * Generates the train dataset.
  * @author Rinde van Lon
  */
-public class TrainDatasetGenerator {
+public class GenerateTrainDataset {
 
   /**
    * @param args Ignored
@@ -43,5 +43,4 @@ public class TrainDatasetGenerator {
     final long duration = System.currentTimeMillis() - time;
     System.out.println("Done, in " + duration / 1000d + "s");
   }
-
 }
