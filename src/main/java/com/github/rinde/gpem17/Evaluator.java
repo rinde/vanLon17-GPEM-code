@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.rinde.sec17;
+package com.github.rinde.gpem17;
 
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -68,6 +68,8 @@ public class Evaluator extends BaseEvaluator {
       .setScenarioReader(
         ScenarioIO.readerAdapter(ScenarioConverters.toSimulatedtime()))
       .usePostProcessor(PostProcessors.statisticsPostProcessor(OBJ_FUNC));
+
+    // TODO add stop condition if it goes nowhere
 
     Map<MASConfiguration, GPNodeHolder> configGpMapping = new LinkedHashMap<>();
     for (GPNodeHolder node : mapping.keySet()) {

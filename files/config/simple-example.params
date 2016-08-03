@@ -1,0 +1,12 @@
+parent.0 = rinecj.params
+
+eval = com.github.rinde.gpem17.Evaluator
+gp.fs.0 = com.github.rinde.gpem17.FunctionSet
+
+seed.0 = 123
+
+pop.subpop.0.size 	= 100
+generations 		= 100
+
+# either 'local' or 'distributed' (this can only be used if a JPPF server is setup, etc)
+eval.host = local

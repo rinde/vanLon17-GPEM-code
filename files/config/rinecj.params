@@ -1,0 +1,18 @@
+
+parent.0 = ecj20parents/koza.params
+
+state = ec.simple.SimpleEvolutionState
+pop.subpop.0.species.fitness = com.github.rinde.ecj.GPFitness
+stat = com.github.rinde.ecj.GPStats
+ 
+gp.fs.0.size = 1
+gp.fs.0.name = f0
+
+
+gp.tree.print-style = lisp
+
+pop.subpop.0.species.ind.numtrees = 1
+pop.subpop.0.species.ind.tree.0 = ec.gp.GPTree
+pop.subpop.0.species.ind.tree.0.tc = tc0
+
+eval.problem.data = rinde.evo4mas.evo.gp.DummyData

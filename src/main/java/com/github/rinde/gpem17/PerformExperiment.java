@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.rinde.sec17;
+package com.github.rinde.gpem17;
+
+import ec.Evolve;
 
 /**
  * 
@@ -23,6 +25,7 @@ public class PerformExperiment {
 
   public static void main(String[] args) {
 
+    Evolve.main(new String[] {"-file", "files/config/simple-example.params"});
   }
 
 }
