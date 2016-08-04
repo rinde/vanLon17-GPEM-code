@@ -25,10 +25,15 @@ import com.github.rinde.ecj.GenericFunctions.Add;
 import com.github.rinde.ecj.GenericFunctions.Constant;
 import com.github.rinde.ecj.GenericFunctions.Div;
 import com.github.rinde.ecj.GenericFunctions.If4;
+import com.github.rinde.ecj.GenericFunctions.Max;
+import com.github.rinde.ecj.GenericFunctions.Min;
 import com.github.rinde.ecj.GenericFunctions.Mul;
+import com.github.rinde.ecj.GenericFunctions.Neg;
 import com.github.rinde.ecj.GenericFunctions.Pow;
 import com.github.rinde.ecj.GenericFunctions.Sub;
 import com.github.rinde.evo4mas.common.VehicleParcelContext;
+import com.github.rinde.rinsim.core.model.pdp.VehicleDTO;
+import com.github.rinde.rinsim.geom.Point;
 
 /**
  * 
@@ -46,11 +51,15 @@ public class FunctionSet extends GPFuncSet<VehicleParcelContext> {
       new Div<VehicleParcelContext>(), /* */
       new Mul<VehicleParcelContext>(), /* */
       new Pow<VehicleParcelContext>(),
+      new Neg<VehicleParcelContext>(),
+      new Min<VehicleParcelContext>(),
+      new Max<VehicleParcelContext>(),
       /* CONSTANTS */
       new Constant<VehicleParcelContext>(1), /* */
       new Constant<VehicleParcelContext>(0), /* */
       /* PROBLEM SPECIFIC VARIABLES */
-      new Urgency());
+      new Urgency(),
+      new TravelTime());
   }
 
   public static class Urgency extends GPFunc<VehicleParcelContext> {
@@ -60,5 +69,19 @@ public class FunctionSet extends GPFuncSet<VehicleParcelContext> {
       }
       return context.parcel().getDeliveryTimeWindow().end() - context.time();
     }
+  }
+
+  public static class TravelTime extends GPFunc<VehicleParcelContext> {
+    public double execute(double[] input, VehicleParcelContext context) {
+      Point parcelLoc = context.isPickup()
+        ? context.parcel().getPickupLocation()
+        : context.parcel().getDeliveryLocation();
+      return computeTravelTime(context.vehicle(), context.vehiclePosition(),
+        parcelLoc);
+    }
+  }
+
+  static double computeTravelTime(VehicleDTO v, Point p1, Point p2) {
+    return (Point.distance(p1, p2) / v.getSpeed()) / 60d;
   }
 }

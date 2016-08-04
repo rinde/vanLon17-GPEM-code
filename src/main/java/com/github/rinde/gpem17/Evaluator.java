@@ -28,20 +28,44 @@ import com.github.rinde.ecj.GPProgramParser;
 import com.github.rinde.evo4mas.common.PriorityHeuristicSolver;
 import com.github.rinde.evo4mas.common.VehicleParcelContext;
 import com.github.rinde.jppf.GPComputationResult;
-import com.github.rinde.rinsim.central.Central;
+import com.github.rinde.logistics.pdptw.mas.TruckFactory.DefaultTruckFactory;
+import com.github.rinde.logistics.pdptw.mas.comm.AuctionCommModel;
+import com.github.rinde.logistics.pdptw.mas.comm.AuctionPanel;
+import com.github.rinde.logistics.pdptw.mas.comm.AuctionStopConditions;
+import com.github.rinde.logistics.pdptw.mas.comm.DoubleBid;
+import com.github.rinde.logistics.pdptw.mas.comm.RtSolverBidder;
+import com.github.rinde.logistics.pdptw.mas.comm.RtSolverBidder.BidFunction;
+import com.github.rinde.logistics.pdptw.mas.comm.RtSolverBidder.BidFunctions;
+import com.github.rinde.logistics.pdptw.mas.route.RtSolverRoutePlanner;
+import com.github.rinde.rinsim.central.Solver;
+import com.github.rinde.rinsim.central.SolverModel;
 import com.github.rinde.rinsim.central.SolverValidator;
+import com.github.rinde.rinsim.core.model.time.TimeModel;
 import com.github.rinde.rinsim.experiment.Experiment;
 import com.github.rinde.rinsim.experiment.Experiment.SimulationResult;
 import com.github.rinde.rinsim.experiment.ExperimentResults;
 import com.github.rinde.rinsim.experiment.MASConfiguration;
 import com.github.rinde.rinsim.experiment.PostProcessors;
+import com.github.rinde.rinsim.experiment.ResultListener;
 import com.github.rinde.rinsim.io.FileProvider;
+import com.github.rinde.rinsim.pdptw.common.AddParcelEvent;
+import com.github.rinde.rinsim.pdptw.common.AddVehicleEvent;
 import com.github.rinde.rinsim.pdptw.common.ObjectiveFunction;
+import com.github.rinde.rinsim.pdptw.common.RouteFollowingVehicle;
+import com.github.rinde.rinsim.pdptw.common.RoutePanel;
 import com.github.rinde.rinsim.pdptw.common.StatisticsDTO;
-import com.github.rinde.rinsim.scenario.ScenarioConverters;
+import com.github.rinde.rinsim.pdptw.common.TimeLinePanel;
+import com.github.rinde.rinsim.scenario.Scenario;
 import com.github.rinde.rinsim.scenario.ScenarioIO;
+import com.github.rinde.rinsim.scenario.StopConditions;
 import com.github.rinde.rinsim.scenario.gendreau06.Gendreau06ObjectiveFunction;
+import com.github.rinde.rinsim.ui.View;
+import com.github.rinde.rinsim.ui.renderers.PDPModelRenderer;
+import com.github.rinde.rinsim.ui.renderers.PlaneRoadModelRenderer;
+import com.github.rinde.rinsim.util.StochasticSupplier;
 import com.google.auto.value.AutoValue;
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.SetMultimap;
 
 import ec.EvolutionState;
@@ -64,9 +88,38 @@ public class Evaluator extends BaseEvaluator {
     Experiment.Builder expBuilder = Experiment.builder()
       .addScenarios(FileProvider.builder()
         .add(Paths.get("files/vanLonHolvoet15"))
-        .filter("glob:**0.20-5-1.00-0.scen"))
+        .filter("glob:**0.50-5-1.00-0.scen"))
       .setScenarioReader(
-        ScenarioIO.readerAdapter(ScenarioConverters.toSimulatedtime()))
+        ScenarioIO.readerAdapter(Converter.INSTANCE))
+      // .withThreads(1)
+      .showGui(View.builder()
+        .withAutoPlay()
+        .with(PlaneRoadModelRenderer.builder())
+        .with(PDPModelRenderer.builder())
+        .with(AuctionPanel.builder())
+        .with(RoutePanel.builder())
+        .with(TimeLinePanel.builder()))
+      .showGui(false)
+      .addResultListener(new ResultListener() {
+
+        @Override
+        public void startComputing(int numberOfSimulations,
+            ImmutableSet<MASConfiguration> configurations,
+            ImmutableSet<Scenario> scenarios, int repetitions,
+            int seedRepetitions) {}
+
+        @Override
+        public void receive(SimulationResult result) {
+          double cost =
+            OBJ_FUNC.computeCost((StatisticsDTO) result.getResultObject());
+
+          // System.out.println(cost);
+        }
+
+        @Override
+        public void doneComputing(ExperimentResults results) {}
+
+      })
       .usePostProcessor(PostProcessors.statisticsPostProcessor(OBJ_FUNC));
 
     // TODO add stop condition if it goes nowhere
@@ -77,7 +130,7 @@ public class Evaluator extends BaseEvaluator {
         .convertToGPProgram(
           (GPBaseNode<VehicleParcelContext>) node.trees[0].child);
 
-      MASConfiguration config = Central.solverConfiguration(
+      MASConfiguration config = createConfig(
         SolverValidator.wrap(PriorityHeuristicSolver.supplier(prog)));
       configGpMapping.put(config, node);
       expBuilder.addConfiguration(config);
@@ -109,8 +162,48 @@ public class Evaluator extends BaseEvaluator {
 
   @Override
   protected int expectedNumberOfResultsPerGPIndividual(EvolutionState state) {
-    // TODO Auto-generated method stub
-    return 0;
+    return 1;
+  }
+
+  static MASConfiguration createConfig(
+      StochasticSupplier<? extends Solver> solver) {
+    final BidFunction bf = BidFunctions.BALANCED_HIGH;
+    return MASConfiguration.pdptwBuilder()
+      .setName("ReAuction-RP-EVO-BID-EVO-" + bf)
+      .addEventHandler(AddVehicleEvent.class,
+        DefaultTruckFactory.builder()
+          .setRoutePlanner(RtSolverRoutePlanner.simulatedTimeSupplier(solver))
+          .setCommunicator(RtSolverBidder.simulatedTimeBuilder(OBJ_FUNC, solver)
+            .withBidFunction(bf)
+            .withReauctionCooldownPeriod(60000))
+          .setLazyComputation(false)
+          .setRouteAdjuster(RouteFollowingVehicle.delayAdjuster())
+          .build())
+      .addModel(AuctionCommModel.builder(DoubleBid.class)
+        .withStopCondition(
+          AuctionStopConditions.and(
+            AuctionStopConditions.<DoubleBid>atLeastNumBids(2),
+            AuctionStopConditions.<DoubleBid>or(
+              AuctionStopConditions.<DoubleBid>allBidders(),
+              AuctionStopConditions.<DoubleBid>maxAuctionDuration(5000))))
+        .withMaxAuctionDuration(30 * 60 * 1000L))
+      .addModel(SolverModel.builder())
+      .addEventHandler(AddParcelEvent.class, AddParcelEvent.namedHandler())
+      .build();
+  }
+
+  enum Converter implements Function<Scenario, Scenario> {
+    INSTANCE {
+      @Override
+      public Scenario apply(Scenario input) {
+        return Scenario.builder(input)
+          .removeModelsOfType(TimeModel.AbstractBuilder.class)
+          .addModel(TimeModel.builder().withTickLength(250))
+          .setStopCondition(StopConditions.or(input.getStopCondition(),
+            StopConditions.limitedTime(8 * 60 * 60 * 1000)))
+          .build();
+      }
+    }
   }
 
 }
