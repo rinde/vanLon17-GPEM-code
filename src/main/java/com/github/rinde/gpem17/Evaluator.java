@@ -48,7 +48,6 @@ import com.github.rinde.rinsim.experiment.MASConfiguration;
 import com.github.rinde.rinsim.experiment.PostProcessors;
 import com.github.rinde.rinsim.experiment.ResultListener;
 import com.github.rinde.rinsim.io.FileProvider;
-import com.github.rinde.rinsim.pdptw.common.AddParcelEvent;
 import com.github.rinde.rinsim.pdptw.common.AddVehicleEvent;
 import com.github.rinde.rinsim.pdptw.common.ObjectiveFunction;
 import com.github.rinde.rinsim.pdptw.common.RouteFollowingVehicle;
@@ -188,7 +187,7 @@ public class Evaluator extends BaseEvaluator {
               AuctionStopConditions.<DoubleBid>maxAuctionDuration(5000))))
         .withMaxAuctionDuration(30 * 60 * 1000L))
       .addModel(SolverModel.builder())
-      .addEventHandler(AddParcelEvent.class, AddParcelEvent.namedHandler())
+      // .addEventHandler(AddParcelEvent.class, AddParcelEvent.namedHandler())
       .build();
   }
 
