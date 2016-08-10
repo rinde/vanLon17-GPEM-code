@@ -6,7 +6,7 @@ stat = com.github.rinde.gpem17.StatsLogger
 
 seed.0 = 123
 
-pop.subpop.0.size 	= 100
+pop.subpop.0.size 	= 1000
 generations 		= 100
 
 # either 'local' or 'distributed' (this can only be used if a JPPF server is setup, etc)
