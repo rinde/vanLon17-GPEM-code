@@ -10,3 +10,6 @@ generations 		= 100
 
 # either 'local' or 'distributed' (this can only be used if a JPPF server is setup, etc)
 eval.host = local
+
+gp.koza.mutate.maxdepth = 12
+gp.koza.xover.maxdepth = 12
