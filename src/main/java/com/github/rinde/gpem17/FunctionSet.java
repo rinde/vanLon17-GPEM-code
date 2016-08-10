@@ -32,8 +32,8 @@ import com.github.rinde.ecj.GenericFunctions.Neg;
 import com.github.rinde.ecj.GenericFunctions.Pow;
 import com.github.rinde.ecj.GenericFunctions.Sub;
 import com.github.rinde.evo4mas.common.VehicleParcelContext;
-import com.github.rinde.rinsim.core.model.pdp.VehicleDTO;
-import com.github.rinde.rinsim.geom.Point;
+import com.github.rinde.evo4mas.common.VehicleParcelContextFunctions.TravelTime;
+import com.github.rinde.evo4mas.common.VehicleParcelContextFunctions.Urgency;
 
 /**
  * 
@@ -45,43 +45,21 @@ public class FunctionSet extends GPFuncSet<VehicleParcelContext> {
   public Collection<GPFunc<VehicleParcelContext>> create() {
     return asList(
       /* GENERIC FUNCTIONS */
-      new If4<VehicleParcelContext>(), /* */
-      new Add<VehicleParcelContext>(), /* */
-      new Sub<VehicleParcelContext>(), /* */
-      new Div<VehicleParcelContext>(), /* */
-      new Mul<VehicleParcelContext>(), /* */
+      new If4<VehicleParcelContext>(),
+      new Add<VehicleParcelContext>(),
+      new Sub<VehicleParcelContext>(),
+      new Div<VehicleParcelContext>(),
+      new Mul<VehicleParcelContext>(),
       new Pow<VehicleParcelContext>(),
       new Neg<VehicleParcelContext>(),
       new Min<VehicleParcelContext>(),
       new Max<VehicleParcelContext>(),
       /* CONSTANTS */
-      new Constant<VehicleParcelContext>(1), /* */
-      new Constant<VehicleParcelContext>(0), /* */
+      new Constant<VehicleParcelContext>(1),
+      new Constant<VehicleParcelContext>(0),
       /* PROBLEM SPECIFIC VARIABLES */
       new Urgency(),
       new TravelTime());
   }
 
-  public static class Urgency extends GPFunc<VehicleParcelContext> {
-    public double execute(double[] input, VehicleParcelContext context) {
-      if (context.isPickup()) {
-        return context.parcel().getPickupTimeWindow().end() - context.time();
-      }
-      return context.parcel().getDeliveryTimeWindow().end() - context.time();
-    }
-  }
-
-  public static class TravelTime extends GPFunc<VehicleParcelContext> {
-    public double execute(double[] input, VehicleParcelContext context) {
-      Point parcelLoc = context.isPickup()
-        ? context.parcel().getPickupLocation()
-        : context.parcel().getDeliveryLocation();
-      return computeTravelTime(context.vehicle(), context.vehiclePosition(),
-        parcelLoc);
-    }
-  }
-
-  static double computeTravelTime(VehicleDTO v, Point p1, Point p2) {
-    return (Point.distance(p1, p2) / v.getSpeed()) / 60d;
-  }
 }

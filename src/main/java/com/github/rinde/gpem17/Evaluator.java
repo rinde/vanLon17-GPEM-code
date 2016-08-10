@@ -23,11 +23,11 @@ import java.util.Map;
 
 import com.github.rinde.ecj.BaseEvaluator;
 import com.github.rinde.ecj.GPBaseNode;
+import com.github.rinde.ecj.GPComputationResult;
 import com.github.rinde.ecj.GPProgram;
 import com.github.rinde.ecj.GPProgramParser;
 import com.github.rinde.evo4mas.common.PriorityHeuristicSolver;
 import com.github.rinde.evo4mas.common.VehicleParcelContext;
-import com.github.rinde.jppf.GPComputationResult;
 import com.github.rinde.logistics.pdptw.mas.TruckFactory.DefaultTruckFactory;
 import com.github.rinde.logistics.pdptw.mas.comm.AuctionCommModel;
 import com.github.rinde.logistics.pdptw.mas.comm.AuctionPanel;
