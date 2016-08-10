@@ -91,7 +91,7 @@ public class Evaluator extends BaseEvaluator {
     Experiment.Builder expBuilder = Experiment.builder()
       .addScenarios(FileProvider.builder()
         .add(Paths.get("files/vanLonHolvoet15"))
-        .filter("glob:**0.50-5-5.00-0.scen"))
+        .filter("glob:**0.50-5-1.00-0.scen"))
       .setScenarioReader(
         ScenarioIO.readerAdapter(Converter.INSTANCE))
       // .withThreads(1)
