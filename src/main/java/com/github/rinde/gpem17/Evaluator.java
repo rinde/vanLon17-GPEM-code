@@ -15,11 +15,14 @@
  */
 package com.github.rinde.gpem17;
 
+import java.io.Serializable;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.annotation.Nullable;
 
 import com.github.rinde.ecj.BaseEvaluator;
 import com.github.rinde.ecj.GPBaseNode;
@@ -40,16 +43,17 @@ import com.github.rinde.logistics.pdptw.mas.route.RtSolverRoutePlanner;
 import com.github.rinde.rinsim.central.Solver;
 import com.github.rinde.rinsim.central.SolverModel;
 import com.github.rinde.rinsim.central.SolverValidator;
+import com.github.rinde.rinsim.core.Simulator;
 import com.github.rinde.rinsim.core.model.time.TimeModel;
 import com.github.rinde.rinsim.experiment.Experiment;
+import com.github.rinde.rinsim.experiment.Experiment.SimArgs;
 import com.github.rinde.rinsim.experiment.Experiment.SimulationResult;
 import com.github.rinde.rinsim.experiment.ExperimentResults;
 import com.github.rinde.rinsim.experiment.MASConfiguration;
+import com.github.rinde.rinsim.experiment.PostProcessor;
 import com.github.rinde.rinsim.experiment.PostProcessors;
-import com.github.rinde.rinsim.experiment.ResultListener;
 import com.github.rinde.rinsim.io.FileProvider;
 import com.github.rinde.rinsim.pdptw.common.AddVehicleEvent;
-import com.github.rinde.rinsim.pdptw.common.ObjectiveFunction;
 import com.github.rinde.rinsim.pdptw.common.RouteFollowingVehicle;
 import com.github.rinde.rinsim.pdptw.common.RoutePanel;
 import com.github.rinde.rinsim.pdptw.common.StatisticsDTO;
@@ -64,7 +68,7 @@ import com.github.rinde.rinsim.ui.renderers.PlaneRoadModelRenderer;
 import com.github.rinde.rinsim.util.StochasticSupplier;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Function;
-import com.google.common.collect.ImmutableSet;
+import com.google.common.base.Optional;
 import com.google.common.collect.SetMultimap;
 
 import ec.EvolutionState;
@@ -75,7 +79,7 @@ import ec.EvolutionState;
  */
 public class Evaluator extends BaseEvaluator {
 
-  static final ObjectiveFunction OBJ_FUNC =
+  static final Gendreau06ObjectiveFunction OBJ_FUNC =
     Gendreau06ObjectiveFunction.instance(50d);
 
   @Override
@@ -99,29 +103,7 @@ public class Evaluator extends BaseEvaluator {
         .with(RoutePanel.builder())
         .with(TimeLinePanel.builder()))
       .showGui(false)
-      .addResultListener(new ResultListener() {
-
-        @Override
-        public void startComputing(int numberOfSimulations,
-            ImmutableSet<MASConfiguration> configurations,
-            ImmutableSet<Scenario> scenarios, int repetitions,
-            int seedRepetitions) {}
-
-        @Override
-        public void receive(SimulationResult result) {
-          double cost =
-            OBJ_FUNC.computeCost((StatisticsDTO) result.getResultObject());
-
-          // System.out.println(cost);
-        }
-
-        @Override
-        public void doneComputing(ExperimentResults results) {}
-
-      })
-      .usePostProcessor(PostProcessors.statisticsPostProcessor(OBJ_FUNC));
-
-    // TODO add stop condition if it goes nowhere
+      .usePostProcessor(AuctionPostProcessor.INSTANCE);
 
     Map<MASConfiguration, GPNodeHolder> configGpMapping = new LinkedHashMap<>();
     for (GPNodeHolder node : mapping.keySet()) {
@@ -139,14 +121,14 @@ public class Evaluator extends BaseEvaluator {
     List<GPComputationResult> convertedResults = new ArrayList<>();
 
     for (SimulationResult sr : results.getResults()) {
-      StatisticsDTO stats = (StatisticsDTO) sr.getResultObject();
+      StatisticsDTO stats = ((ResultObject) sr.getResultObject()).getStats();
       double cost = OBJ_FUNC.computeCost(stats);
       float fitness = (float) cost;
       if (!stats.simFinish) {
         fitness = Float.MAX_VALUE;
       }
       String id = configGpMapping.get(sr.getSimArgs().getMasConfig()).string;
-      convertedResults.add(SingleResult.create((float) fitness, id));
+      convertedResults.add(SingleResult.create((float) fitness, id, sr));
     }
 
     processResults(state, mapping, convertedResults);
@@ -154,8 +136,10 @@ public class Evaluator extends BaseEvaluator {
 
   @AutoValue
   abstract static class SingleResult implements GPComputationResult {
-    static SingleResult create(float fitness, String id) {
-      return new AutoValue_Evaluator_SingleResult(fitness, id);
+    abstract SimulationResult getSimulationResult();
+
+    static SingleResult create(float fitness, String id, SimulationResult sr) {
+      return new AutoValue_Evaluator_SingleResult(fitness, id, sr);
     }
   }
 
@@ -205,4 +189,69 @@ public class Evaluator extends BaseEvaluator {
     }
   }
 
+  @AutoValue
+  abstract static class ResultObject {
+
+    abstract StatisticsDTO getStats();
+
+    abstract Optional<AuctionStats> getAuctionStats();
+
+    static ResultObject create(StatisticsDTO simulationStats,
+        Optional<AuctionStats> auctionStats) {
+      return new AutoValue_Evaluator_ResultObject(simulationStats,
+        auctionStats);
+    }
+  }
+
+  @AutoValue
+  abstract static class AuctionStats {
+    abstract int getNumParcels();
+
+    abstract int getNumReauctions();
+
+    abstract int getNumUnsuccesfulReauctions();
+
+    abstract int getNumFailedReauctions();
+
+    static AuctionStats create(int numP, int numR, int numUn, int numF) {
+      return new AutoValue_Evaluator_AuctionStats(numP, numR, numUn,
+        numF);
+    }
+  }
+
+  enum AuctionPostProcessor
+    implements PostProcessor<ResultObject>,Serializable {
+
+    INSTANCE {
+      @Override
+      public ResultObject collectResults(Simulator sim, SimArgs args) {
+
+        @Nullable
+        final AuctionCommModel<?> auctionModel =
+          sim.getModelProvider().tryGetModel(AuctionCommModel.class);
+
+        final Optional<AuctionStats> aStats;
+        if (auctionModel == null) {
+          aStats = Optional.absent();
+        } else {
+          final int parcels = auctionModel.getNumParcels();
+          final int reauctions = auctionModel.getNumAuctions() - parcels;
+          final int unsuccessful = auctionModel.getNumUnsuccesfulAuctions();
+          final int failed = auctionModel.getNumFailedAuctions();
+          aStats = Optional
+            .of(AuctionStats.create(parcels, reauctions, unsuccessful, failed));
+        }
+        final StatisticsDTO stats =
+          PostProcessors.statisticsPostProcessor(OBJ_FUNC)
+            .collectResults(sim, args);
+        return ResultObject.create(stats, aStats);
+      }
+
+      @Override
+      public FailureStrategy handleFailure(Exception e, Simulator sim,
+          SimArgs args) {
+        return FailureStrategy.ABORT_EXPERIMENT_RUN;
+      }
+    }
+  }
 }

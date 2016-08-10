@@ -1,4 +1,5 @@
 core/files/test/
+files/results/
 files/vanLonHolvoet15/
 files/train-dataset/
 example/src/main/java/rinde/sim/playground/
