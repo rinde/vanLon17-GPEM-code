@@ -28,9 +28,9 @@ import org.joda.time.format.ISODateTimeFormat;
 
 import com.github.rinde.ecj.GPComputationResult;
 import com.github.rinde.ecj.GPStats;
-import com.github.rinde.gpem17.Evaluator.AuctionStats;
-import com.github.rinde.gpem17.Evaluator.ResultObject;
-import com.github.rinde.gpem17.Evaluator.SingleResult;
+import com.github.rinde.gpem17.ListEvaluator.AuctionStats;
+import com.github.rinde.gpem17.ListEvaluator.ResultObject;
+import com.github.rinde.gpem17.ListEvaluator.SingleResult;
 import com.github.rinde.rinsim.experiment.Experiment.SimulationResult;
 import com.github.rinde.rinsim.pdptw.common.StatisticsDTO;
 import com.google.common.base.Charsets;
@@ -89,17 +89,17 @@ public class StatsLogger extends GPStats {
       final String id = sr.getSimArgs().getScenario().getProblemInstanceId();
       final String scenarioName = DASH_JOINER.join(pc, id);
 
-      double cost = Evaluator.OBJ_FUNC.computeCost(stats);
+      double cost = ListEvaluator.OBJ_FUNC.computeCost(stats);
       final ImmutableMap.Builder<Enum<?>, Object> map =
         ImmutableMap.<Enum<?>, Object>builder()
           .put(CsvFields.GENERATION, state.generation)
           .put(CsvFields.SCENARIO_ID, scenarioName)
           .put(CsvFields.RANDOM_SEED, sr.getSimArgs().getRandomSeed())
           .put(CsvFields.COST, cost)
-          .put(CsvFields.TRAVEL_TIME, Evaluator.OBJ_FUNC.travelTime(stats))
-          .put(CsvFields.TARDINESS, Evaluator.OBJ_FUNC.tardiness(stats))
-          .put(CsvFields.OVER_TIME, Evaluator.OBJ_FUNC.overTime(stats))
-          .put(CsvFields.IS_VALID, Evaluator.OBJ_FUNC.isValidResult(stats))
+          .put(CsvFields.TRAVEL_TIME, ListEvaluator.OBJ_FUNC.travelTime(stats))
+          .put(CsvFields.TARDINESS, ListEvaluator.OBJ_FUNC.tardiness(stats))
+          .put(CsvFields.OVER_TIME, ListEvaluator.OBJ_FUNC.overTime(stats))
+          .put(CsvFields.IS_VALID, ListEvaluator.OBJ_FUNC.isValidResult(stats))
           .put(CsvFields.NUM_ORDERS, stats.totalParcels)
           .put(CsvFields.NUM_VEHICLES, stats.totalVehicles)
           .put(CsvFields.COST_PER_PARCEL, cost / (double) stats.totalParcels);

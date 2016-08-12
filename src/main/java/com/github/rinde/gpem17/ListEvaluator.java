@@ -29,19 +29,20 @@ import com.github.rinde.ecj.GPBaseNode;
 import com.github.rinde.ecj.GPComputationResult;
 import com.github.rinde.ecj.GPProgram;
 import com.github.rinde.ecj.GPProgramParser;
-import com.github.rinde.ecj.PriorityHeuristic;
-import com.github.rinde.evo4mas.common.EvoBidder;
-import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.GpGlobal;
+import com.github.rinde.evo4mas.common.PriorityHeuristicSolver;
+import com.github.rinde.evo4mas.common.VehicleParcelContext;
 import com.github.rinde.logistics.pdptw.mas.TruckFactory.DefaultTruckFactory;
 import com.github.rinde.logistics.pdptw.mas.comm.AuctionCommModel;
 import com.github.rinde.logistics.pdptw.mas.comm.AuctionPanel;
 import com.github.rinde.logistics.pdptw.mas.comm.AuctionStopConditions;
 import com.github.rinde.logistics.pdptw.mas.comm.DoubleBid;
+import com.github.rinde.logistics.pdptw.mas.comm.RtSolverBidder;
 import com.github.rinde.logistics.pdptw.mas.comm.RtSolverBidder.BidFunction;
 import com.github.rinde.logistics.pdptw.mas.comm.RtSolverBidder.BidFunctions;
 import com.github.rinde.logistics.pdptw.mas.route.RtSolverRoutePlanner;
-import com.github.rinde.logistics.pdptw.solver.CheapestInsertionHeuristic;
+import com.github.rinde.rinsim.central.Solver;
 import com.github.rinde.rinsim.central.SolverModel;
+import com.github.rinde.rinsim.central.SolverValidator;
 import com.github.rinde.rinsim.core.Simulator;
 import com.github.rinde.rinsim.core.model.time.TimeModel;
 import com.github.rinde.rinsim.experiment.Experiment;
@@ -64,6 +65,7 @@ import com.github.rinde.rinsim.scenario.gendreau06.Gendreau06ObjectiveFunction;
 import com.github.rinde.rinsim.ui.View;
 import com.github.rinde.rinsim.ui.renderers.PDPModelRenderer;
 import com.github.rinde.rinsim.ui.renderers.PlaneRoadModelRenderer;
+import com.github.rinde.rinsim.util.StochasticSupplier;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
@@ -75,7 +77,7 @@ import ec.EvolutionState;
  * 
  * @author Rinde van Lon
  */
-public class Evaluator extends BaseEvaluator {
+public class ListEvaluator extends BaseEvaluator {
 
   static final Gendreau06ObjectiveFunction OBJ_FUNC =
     Gendreau06ObjectiveFunction.instance(50d);
@@ -100,17 +102,17 @@ public class Evaluator extends BaseEvaluator {
         .with(AuctionPanel.builder())
         .with(RoutePanel.builder())
         .with(TimeLinePanel.builder()))
-      .withThreads(1)
       .showGui(false)
       .usePostProcessor(AuctionPostProcessor.INSTANCE);
 
     Map<MASConfiguration, GPNodeHolder> configGpMapping = new LinkedHashMap<>();
     for (GPNodeHolder node : mapping.keySet()) {
-      final GPProgram<GpGlobal> prog = GPProgramParser
+      final GPProgram<VehicleParcelContext> prog = GPProgramParser
         .convertToGPProgram(
-          (GPBaseNode<GpGlobal>) node.trees[0].child);
+          (GPBaseNode<VehicleParcelContext>) node.trees[0].child);
 
-      MASConfiguration config = createConfig(prog);
+      MASConfiguration config = createConfig(
+        SolverValidator.wrap(PriorityHeuristicSolver.supplier(prog)));
       configGpMapping.put(config, node);
       expBuilder.addConfiguration(config);
     }
@@ -137,7 +139,7 @@ public class Evaluator extends BaseEvaluator {
     abstract SimulationResult getSimulationResult();
 
     static SingleResult create(float fitness, String id, SimulationResult sr) {
-      return new AutoValue_Evaluator_SingleResult(fitness, id, sr);
+      return new AutoValue_ListEvaluator_SingleResult(fitness, id, sr);
     }
   }
 
@@ -146,16 +148,16 @@ public class Evaluator extends BaseEvaluator {
     return 1;
   }
 
-  static MASConfiguration createConfig(PriorityHeuristic<GpGlobal> solver) {
+  static MASConfiguration createConfig(
+      StochasticSupplier<? extends Solver> solver) {
     final BidFunction bf = BidFunctions.BALANCED_HIGH;
     return MASConfiguration.pdptwBuilder()
       .setName("ReAuction-RP-EVO-BID-EVO-" + bf)
       .addEventHandler(AddVehicleEvent.class,
         DefaultTruckFactory.builder()
-          .setRoutePlanner(
-            RtSolverRoutePlanner.simulatedTimeSupplier(
-              CheapestInsertionHeuristic.supplier(OBJ_FUNC)))
-          .setCommunicator(EvoBidder.simulatedTimeBuilder(solver, OBJ_FUNC)
+          .setRoutePlanner(RtSolverRoutePlanner.simulatedTimeSupplier(solver))
+          .setCommunicator(RtSolverBidder.simulatedTimeBuilder(OBJ_FUNC, solver)
+            .withBidFunction(bf)
             .withReauctionCooldownPeriod(60000))
           .setLazyComputation(false)
           .setRouteAdjuster(RouteFollowingVehicle.delayAdjuster())
@@ -196,7 +198,7 @@ public class Evaluator extends BaseEvaluator {
 
     static ResultObject create(StatisticsDTO simulationStats,
         Optional<AuctionStats> auctionStats) {
-      return new AutoValue_Evaluator_ResultObject(simulationStats,
+      return new AutoValue_ListEvaluator_ResultObject(simulationStats,
         auctionStats);
     }
   }
@@ -212,7 +214,7 @@ public class Evaluator extends BaseEvaluator {
     abstract int getNumFailedReauctions();
 
     static AuctionStats create(int numP, int numR, int numUn, int numF) {
-      return new AutoValue_Evaluator_AuctionStats(numP, numR, numUn,
+      return new AutoValue_ListEvaluator_AuctionStats(numP, numR, numUn,
         numF);
     }
   }

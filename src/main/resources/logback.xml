@@ -26,7 +26,7 @@
 	<logger name="com.github.rinde.rinsim.core.model.time" level="WARN" />
 	<logger name="com.github.rinde.rinsim.scenario" level="WARN" />
 	<logger name="com.github.rinde.logistics" level="WARN" />
-	<logger name="com.github.rinde.logistics.pdptw.mas.comm" level="WARN" />
+	<logger name="com.github.rinde.logistics.pdptw.mas.comm" level="TRACE" />
 	<logger name="com.github.rinde.gpem17" level="INFO" />
 	<logger name="com.github.rinde.logistics.pdptw.solver.optaplanner" level="WARN" />
 	<logger name="org.optaplanner" level="WARN" />

@@ -15,7 +15,8 @@
  */
 package com.github.rinde.gpem17;
 
-import java.util.Arrays;
+import static java.util.Arrays.asList;
+
 import java.util.Collection;
 
 import com.github.rinde.ecj.GPFunc;
@@ -30,48 +31,35 @@ import com.github.rinde.ecj.GenericFunctions.Mul;
 import com.github.rinde.ecj.GenericFunctions.Neg;
 import com.github.rinde.ecj.GenericFunctions.Pow;
 import com.github.rinde.ecj.GenericFunctions.Sub;
-import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.GpGlobal;
-import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.InsertionCost;
-import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.InsertionOverTime;
-import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.InsertionTardiness;
-import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.InsertionTravelTime;
-import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.Time;
-import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.TimeLeft;
-import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.Utilization;
+import com.github.rinde.evo4mas.common.VehicleParcelContext;
+import com.github.rinde.evo4mas.common.VehicleParcelContextFunctions.TravelTime;
+import com.github.rinde.evo4mas.common.VehicleParcelContextFunctions.Urgency;
 
 /**
  * 
  * @author Rinde van Lon
  */
-public class FunctionSet extends GPFuncSet<GpGlobal> {
+public class ListFunctionSet extends GPFuncSet<VehicleParcelContext> {
 
   @Override
-  public Collection<GPFunc<GpGlobal>> create() {
-    return Arrays.asList(
+  public Collection<GPFunc<VehicleParcelContext>> create() {
+    return asList(
       /* GENERIC FUNCTIONS */
-      new If4<GpGlobal>(),
-      new Add<GpGlobal>(),
-      new Sub<GpGlobal>(),
-      new Div<GpGlobal>(),
-      new Mul<GpGlobal>(),
-      new Pow<GpGlobal>(),
-      new Neg<GpGlobal>(),
-      new Min<GpGlobal>(),
-      new Max<GpGlobal>(),
+      new If4<VehicleParcelContext>(),
+      new Add<VehicleParcelContext>(),
+      new Sub<VehicleParcelContext>(),
+      new Div<VehicleParcelContext>(),
+      new Mul<VehicleParcelContext>(),
+      new Pow<VehicleParcelContext>(),
+      new Neg<VehicleParcelContext>(),
+      new Min<VehicleParcelContext>(),
+      new Max<VehicleParcelContext>(),
       /* CONSTANTS */
-      new Constant<GpGlobal>(2),
-      new Constant<GpGlobal>(1),
-      // new Constant<GpGlobal>(0),
-
-      new InsertionCost(),
-      new InsertionTravelTime(),
-      new InsertionTardiness(),
-      new InsertionOverTime(),
-      new Time(),
-      new TimeLeft(),
-      new Utilization()
-
-    );
+      new Constant<VehicleParcelContext>(1),
+      new Constant<VehicleParcelContext>(0),
+      /* PROBLEM SPECIFIC VARIABLES */
+      new Urgency(),
+      new TravelTime());
   }
 
 }
