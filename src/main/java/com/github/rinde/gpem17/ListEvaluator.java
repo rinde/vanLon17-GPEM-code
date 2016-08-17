@@ -66,7 +66,6 @@ import com.github.rinde.rinsim.ui.View;
 import com.github.rinde.rinsim.ui.renderers.PDPModelRenderer;
 import com.github.rinde.rinsim.ui.renderers.PlaneRoadModelRenderer;
 import com.github.rinde.rinsim.util.StochasticSupplier;
-import com.google.auto.value.AutoValue;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.collect.SetMultimap;
@@ -134,15 +133,6 @@ public class ListEvaluator extends BaseEvaluator {
     processResults(state, mapping, convertedResults);
   }
 
-  @AutoValue
-  abstract static class SingleResult implements GPComputationResult {
-    abstract SimulationResult getSimulationResult();
-
-    static SingleResult create(float fitness, String id, SimulationResult sr) {
-      return new AutoValue_ListEvaluator_SingleResult(fitness, id, sr);
-    }
-  }
-
   @Override
   protected int expectedNumberOfResultsPerGPIndividual(EvolutionState state) {
     return 1;
@@ -186,36 +176,6 @@ public class ListEvaluator extends BaseEvaluator {
             StopConditions.limitedTime(8 * 60 * 60 * 1000)))
           .build();
       }
-    }
-  }
-
-  @AutoValue
-  abstract static class ResultObject {
-
-    abstract StatisticsDTO getStats();
-
-    abstract Optional<AuctionStats> getAuctionStats();
-
-    static ResultObject create(StatisticsDTO simulationStats,
-        Optional<AuctionStats> auctionStats) {
-      return new AutoValue_ListEvaluator_ResultObject(simulationStats,
-        auctionStats);
-    }
-  }
-
-  @AutoValue
-  abstract static class AuctionStats {
-    abstract int getNumParcels();
-
-    abstract int getNumReauctions();
-
-    abstract int getNumUnsuccesfulReauctions();
-
-    abstract int getNumFailedReauctions();
-
-    static AuctionStats create(int numP, int numR, int numUn, int numF) {
-      return new AutoValue_ListEvaluator_AuctionStats(numP, numR, numUn,
-        numF);
     }
   }
 

@@ -28,9 +28,6 @@ import org.joda.time.format.ISODateTimeFormat;
 
 import com.github.rinde.ecj.GPComputationResult;
 import com.github.rinde.ecj.GPStats;
-import com.github.rinde.gpem17.ListEvaluator.AuctionStats;
-import com.github.rinde.gpem17.ListEvaluator.ResultObject;
-import com.github.rinde.gpem17.ListEvaluator.SingleResult;
 import com.github.rinde.rinsim.experiment.Experiment.SimulationResult;
 import com.github.rinde.rinsim.pdptw.common.StatisticsDTO;
 import com.google.common.base.Charsets;

@@ -50,12 +50,12 @@ import com.github.rinde.rinsim.experiment.Experiment.SimulationResult;
 import com.github.rinde.rinsim.experiment.ExperimentResults;
 import com.github.rinde.rinsim.experiment.MASConfiguration;
 import com.github.rinde.rinsim.experiment.PostProcessor;
-import com.github.rinde.rinsim.experiment.PostProcessors;
 import com.github.rinde.rinsim.io.FileProvider;
 import com.github.rinde.rinsim.pdptw.common.AddVehicleEvent;
 import com.github.rinde.rinsim.pdptw.common.RouteFollowingVehicle;
 import com.github.rinde.rinsim.pdptw.common.RoutePanel;
 import com.github.rinde.rinsim.pdptw.common.StatisticsDTO;
+import com.github.rinde.rinsim.pdptw.common.StatsTracker;
 import com.github.rinde.rinsim.pdptw.common.TimeLinePanel;
 import com.github.rinde.rinsim.scenario.Scenario;
 import com.github.rinde.rinsim.scenario.ScenarioIO;
@@ -64,7 +64,6 @@ import com.github.rinde.rinsim.scenario.gendreau06.Gendreau06ObjectiveFunction;
 import com.github.rinde.rinsim.ui.View;
 import com.github.rinde.rinsim.ui.renderers.PDPModelRenderer;
 import com.github.rinde.rinsim.ui.renderers.PlaneRoadModelRenderer;
-import com.google.auto.value.AutoValue;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.collect.SetMultimap;
@@ -76,6 +75,8 @@ import ec.EvolutionState;
  * @author Rinde van Lon
  */
 public class Evaluator extends BaseEvaluator {
+
+  static final long MAX_SIM_TIME = 8 * 60 * 60 * 1000L;
 
   static final Gendreau06ObjectiveFunction OBJ_FUNC =
     Gendreau06ObjectiveFunction.instance(50d);
@@ -100,7 +101,6 @@ public class Evaluator extends BaseEvaluator {
         .with(AuctionPanel.builder())
         .with(RoutePanel.builder())
         .with(TimeLinePanel.builder()))
-      .withThreads(1)
       .showGui(false)
       .usePostProcessor(AuctionPostProcessor.INSTANCE);
 
@@ -122,7 +122,7 @@ public class Evaluator extends BaseEvaluator {
       StatisticsDTO stats = ((ResultObject) sr.getResultObject()).getStats();
       double cost = OBJ_FUNC.computeCost(stats);
       float fitness = (float) cost;
-      if (!stats.simFinish) {
+      if (!OBJ_FUNC.isValidResult(stats)) {
         fitness = Float.MAX_VALUE;
       }
       String id = configGpMapping.get(sr.getSimArgs().getMasConfig()).string;
@@ -130,15 +130,6 @@ public class Evaluator extends BaseEvaluator {
     }
 
     processResults(state, mapping, convertedResults);
-  }
-
-  @AutoValue
-  abstract static class SingleResult implements GPComputationResult {
-    abstract SimulationResult getSimulationResult();
-
-    static SingleResult create(float fitness, String id, SimulationResult sr) {
-      return new AutoValue_Evaluator_SingleResult(fitness, id, sr);
-    }
   }
 
   @Override
@@ -181,39 +172,9 @@ public class Evaluator extends BaseEvaluator {
           .removeModelsOfType(TimeModel.AbstractBuilder.class)
           .addModel(TimeModel.builder().withTickLength(250))
           .setStopCondition(StopConditions.or(input.getStopCondition(),
-            StopConditions.limitedTime(8 * 60 * 60 * 1000)))
+            StopConditions.limitedTime(MAX_SIM_TIME)))
           .build();
       }
-    }
-  }
-
-  @AutoValue
-  abstract static class ResultObject {
-
-    abstract StatisticsDTO getStats();
-
-    abstract Optional<AuctionStats> getAuctionStats();
-
-    static ResultObject create(StatisticsDTO simulationStats,
-        Optional<AuctionStats> auctionStats) {
-      return new AutoValue_Evaluator_ResultObject(simulationStats,
-        auctionStats);
-    }
-  }
-
-  @AutoValue
-  abstract static class AuctionStats {
-    abstract int getNumParcels();
-
-    abstract int getNumReauctions();
-
-    abstract int getNumUnsuccesfulReauctions();
-
-    abstract int getNumFailedReauctions();
-
-    static AuctionStats create(int numP, int numR, int numUn, int numF) {
-      return new AutoValue_Evaluator_AuctionStats(numP, numR, numUn,
-        numF);
     }
   }
 
@@ -239,9 +200,10 @@ public class Evaluator extends BaseEvaluator {
           aStats = Optional
             .of(AuctionStats.create(parcels, reauctions, unsuccessful, failed));
         }
+
         final StatisticsDTO stats =
-          PostProcessors.statisticsPostProcessor(OBJ_FUNC)
-            .collectResults(sim, args);
+          sim.getModelProvider().getModel(StatsTracker.class).getStatistics();
+
         return ResultObject.create(stats, aStats);
       }
 
