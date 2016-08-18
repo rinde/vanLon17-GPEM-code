@@ -32,12 +32,13 @@ import com.github.rinde.ecj.GenericFunctions.Pow;
 import com.github.rinde.ecj.GenericFunctions.Sub;
 import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.GpGlobal;
 import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.InsertionCost;
+import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.InsertionFlexibility;
 import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.InsertionOverTime;
 import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.InsertionTardiness;
 import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.InsertionTravelTime;
+import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.Slack;
 import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.Time;
 import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.TimeLeft;
-import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.Utilization;
 
 /**
  * 
@@ -59,19 +60,18 @@ public class FunctionSet extends GPFuncSet<GpGlobal> {
       new Min<GpGlobal>(),
       new Max<GpGlobal>(),
       /* CONSTANTS */
+      new Constant<GpGlobal>(10),
       new Constant<GpGlobal>(2),
       new Constant<GpGlobal>(1),
-      // new Constant<GpGlobal>(0),
-
+      new Constant<GpGlobal>(0),
+      new InsertionFlexibility(),
       new InsertionCost(),
       new InsertionTravelTime(),
       new InsertionTardiness(),
       new InsertionOverTime(),
       new Time(),
       new TimeLeft(),
-      new Utilization()
-
-    );
+      new Slack());
   }
 
 }
