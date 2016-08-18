@@ -26,7 +26,8 @@
 	<logger name="com.github.rinde.rinsim.central.rt.RtSolverModel" level="WARN" />
 	<logger name="com.github.rinde.rinsim.core.model.time" level="WARN" />
 	<logger name="com.github.rinde.rinsim.scenario" level="WARN" />
-	<logger name="com.github.rinde.logistics" level="WARN" />
+	<logger name="com.github.rinde.rinsim.pdptw" level="WARN" />
+	<logger name="com.github.rinde.logistics.pdptw" level="WARN" />
 	<logger name="com.github.rinde.logistics.pdptw.mas" level="WARN" />
 	<logger name="com.github.rinde.logistics.pdptw.mas.comm" level="WARN" />
 	<logger name="com.github.rinde.gpem17" level="INFO" />

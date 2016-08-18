@@ -54,6 +54,7 @@ import com.github.rinde.rinsim.io.FileProvider;
 import com.github.rinde.rinsim.pdptw.common.AddVehicleEvent;
 import com.github.rinde.rinsim.pdptw.common.RouteFollowingVehicle;
 import com.github.rinde.rinsim.pdptw.common.RoutePanel;
+import com.github.rinde.rinsim.pdptw.common.RouteRenderer;
 import com.github.rinde.rinsim.pdptw.common.StatisticsDTO;
 import com.github.rinde.rinsim.pdptw.common.StatsTracker;
 import com.github.rinde.rinsim.pdptw.common.TimeLinePanel;
@@ -76,7 +77,7 @@ import ec.EvolutionState;
  */
 public class Evaluator extends BaseEvaluator {
 
-  static final long MAX_SIM_TIME = 12 * 60 * 60 * 1000L;
+  static final long MAX_SIM_TIME = 8 * 60 * 60 * 1000L;
 
   static final Gendreau06ObjectiveFunction OBJ_FUNC =
     Gendreau06ObjectiveFunction.instance(50d);
@@ -90,26 +91,35 @@ public class Evaluator extends BaseEvaluator {
     Experiment.Builder expBuilder = Experiment.builder()
       .addScenarios(FileProvider.builder()
         .add(Paths.get("files/vanLonHolvoet15"))
-        .filter("glob:**0.50-5-1.00-0.scen"))
+        .filter("glob:**0.50-20-1.00-0.scen"))
       .setScenarioReader(
         ScenarioIO.readerAdapter(Converter.INSTANCE))
       // .withThreads(1)
       .showGui(View.builder()
         .withAutoPlay()
+        .withSpeedUp(64)
+        .withAutoClose()
+        .withResolution(1280, 768)
         .with(PlaneRoadModelRenderer.builder())
         .with(PDPModelRenderer.builder())
         .with(AuctionPanel.builder())
         .with(RoutePanel.builder())
+        .with(RouteRenderer.builder())
         .with(TimeLinePanel.builder()))
       .showGui(false)
       .usePostProcessor(AuctionPostProcessor.INSTANCE);
 
     Map<MASConfiguration, GPNodeHolder> configGpMapping = new LinkedHashMap<>();
     for (GPNodeHolder node : mapping.keySet()) {
-      final GPProgram<GpGlobal> prog = GPProgramParser
-        .convertToGPProgram(
-          (GPBaseNode<GpGlobal>) node.trees[0].child);
 
+      // GPProgram<GpGlobal> prog =
+      // GPProgramParser.parseProgramFunc("(insertioncost)",
+      // (new FunctionSet()).create());
+
+      final GPProgram<GpGlobal> prog = GPProgramParser
+        .convertToGPProgram((GPBaseNode<GpGlobal>) node.trees[0].child);
+
+      System.out.println(prog);
       MASConfiguration config = createConfig(prog);
       configGpMapping.put(config, node);
       expBuilder.addConfiguration(config);
@@ -172,7 +182,8 @@ public class Evaluator extends BaseEvaluator {
           .removeModelsOfType(TimeModel.AbstractBuilder.class)
           .addModel(TimeModel.builder().withTickLength(250))
           .setStopCondition(StopConditions.or(input.getStopCondition(),
-            StopConditions.limitedTime(MAX_SIM_TIME)))
+            StopConditions.limitedTime(MAX_SIM_TIME),
+            EvoStopCondition.INSTANCE))
           .build();
       }
     }
