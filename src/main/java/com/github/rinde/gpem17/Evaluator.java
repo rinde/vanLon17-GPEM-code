@@ -76,7 +76,7 @@ import ec.EvolutionState;
  */
 public class Evaluator extends BaseEvaluator {
 
-  static final long MAX_SIM_TIME = 8 * 60 * 60 * 1000L;
+  static final long MAX_SIM_TIME = 12 * 60 * 60 * 1000L;
 
   static final Gendreau06ObjectiveFunction OBJ_FUNC =
     Gendreau06ObjectiveFunction.instance(50d);
