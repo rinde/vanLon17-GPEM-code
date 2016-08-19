@@ -53,7 +53,8 @@ public class StEvaluation {
     Evaluator.evaluate(list,
       FileProvider.builder()
         .add(Paths.get(Evaluator.TRAINSET_PATH))
-        .filter("regex:.*0\\.50-20-1\\.00-[01]?[0-9]\\.scen").build().get());
+        .filter("regex:.*0\\.50-20-1\\.00-[01]?[0-9]\\.scen").build().get(),
+      false);
     System.out.println("Done.");
   }
 

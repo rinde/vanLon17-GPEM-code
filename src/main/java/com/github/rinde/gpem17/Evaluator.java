@@ -82,6 +82,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.SetMultimap;
 
 import ec.EvolutionState;
+import ec.util.Parameter;
 
 /**
  * 
@@ -89,9 +90,16 @@ import ec.EvolutionState;
  */
 public class Evaluator extends BaseEvaluator {
 
+  enum Properties {
+    DISTRIBUTED, NUM_SCENARIOS_PER_GEN;
+
+    public String toString() {
+      return name().toLowerCase();
+    }
+  }
+
   static final String TRAINSET_PATH = "files/train-dataset";
   static final long MAX_SIM_TIME = 8 * 60 * 60 * 1000L;
-  static final int NUM_SCENS_PER_GEN = 3;
 
   static final Pattern CAPTURE_INSTANCE_ID =
     Pattern.compile(".*-(\\d+?)\\.scen");
@@ -100,6 +108,8 @@ public class Evaluator extends BaseEvaluator {
     Gendreau06ObjectiveFunction.instance(50d);
 
   final ImmutableList<Path> paths;
+  boolean distributed;
+  int numScenariosPerGen;
 
   public Evaluator() {
     super();
@@ -124,9 +134,19 @@ public class Evaluator extends BaseEvaluator {
     paths = ImmutableList.copyOf(ps);
   }
 
+  @Override
+  public void setup(final EvolutionState state, final Parameter base) {
+    distributed =
+      state.parameters.getBoolean(base.push(Properties.DISTRIBUTED.toString()),
+        null, false);
+    numScenariosPerGen =
+      state.parameters.getInt(
+        base.push(Properties.NUM_SCENARIOS_PER_GEN.toString()), null);
+  }
+
   static Experiment.Builder experimentBuilder(boolean showGui,
-      Iterable<Path> scenarioPaths) {
-    return Experiment.builder()
+      Iterable<Path> scenarioPaths, boolean distributed) {
+    Experiment.Builder builder = Experiment.builder()
       .addScenarios(FileProvider.builder().add(scenarioPaths))
       .setScenarioReader(
         ScenarioIO.readerAdapter(Converter.INSTANCE))
@@ -144,12 +164,18 @@ public class Evaluator extends BaseEvaluator {
         .with(TimeLinePanel.builder()))
       .showGui(showGui)
       .usePostProcessor(AuctionPostProcessor.INSTANCE);
+
+    if (distributed) {
+      builder.computeDistributed();
+    }
+
+    return builder;
   }
 
   static void evaluate(Iterable<GPFunc<GpGlobal>> funcs,
-      Iterable<Path> scenarioPaths) {
+      Iterable<Path> scenarioPaths, boolean distributed) {
     Experiment.Builder expBuilder =
-      experimentBuilder(false, scenarioPaths);
+      experimentBuilder(false, scenarioPaths, distributed);
 
     Map<MASConfiguration, String> map = new LinkedHashMap<>();
     for (GPFunc<GpGlobal> func : funcs) {
@@ -173,12 +199,12 @@ public class Evaluator extends BaseEvaluator {
   public void evaluatePopulation(EvolutionState state) {
     SetMultimap<GPNodeHolder, IndividualHolder> mapping =
       getGPFitnessMapping(state);
-    int fromIndex = state.generation * NUM_SCENS_PER_GEN;
-    int toIndex = fromIndex + NUM_SCENS_PER_GEN;
+    int fromIndex = state.generation * numScenariosPerGen;
+    int toIndex = fromIndex + numScenariosPerGen;
 
     System.out.println(paths.subList(fromIndex, toIndex));
     Experiment.Builder expBuilder =
-      experimentBuilder(false, paths.subList(fromIndex, toIndex));
+      experimentBuilder(false, paths.subList(fromIndex, toIndex), distributed);
 
     Map<MASConfiguration, GPNodeHolder> configGpMapping = new LinkedHashMap<>();
     for (GPNodeHolder node : mapping.keySet()) {
@@ -214,7 +240,7 @@ public class Evaluator extends BaseEvaluator {
 
   @Override
   protected int expectedNumberOfResultsPerGPIndividual(EvolutionState state) {
-    return NUM_SCENS_PER_GEN;
+    return numScenariosPerGen;
   }
 
   static MASConfiguration createConfig(PriorityHeuristic<GpGlobal> solver) {

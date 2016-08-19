@@ -1,9 +1,13 @@
 package com.github.rinde.gpem17;
 
+import java.io.Serializable;
+
 import com.google.auto.value.AutoValue;
 
 @AutoValue
-abstract class AuctionStats {
+abstract class AuctionStats implements Serializable {
+  private static final long serialVersionUID = 1274657052180048653L;
+
   abstract int getNumParcels();
 
   abstract int getNumReauctions();

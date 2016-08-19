@@ -9,8 +9,8 @@ seed.0 = 123
 pop.subpop.0.size 	= 500
 generations 		= 100
 
-# either 'local' or 'distributed' (this can only be used if a JPPF server is setup, etc)
-eval.host = local
+eval.distributed = true
+eval.num_scenarios_per_gen = 3
 
 gp.koza.mutate.maxdepth = 17
 gp.koza.xover.maxdepth = 17
