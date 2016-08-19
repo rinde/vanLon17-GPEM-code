@@ -15,8 +15,7 @@
  */
 package com.github.rinde.gpem17;
 
-import static java.util.Arrays.asList;
-
+import java.util.Arrays;
 import java.util.List;
 
 import com.github.rinde.ecj.GPFunc;
@@ -39,7 +38,7 @@ public class StEvaluation {
   public static void main(String[] args) {
 
     List<GPFunc<GpGlobal>> list =
-      asList(
+      Arrays.<GPFunc<GpGlobal>>asList(
         new InsertionFlexibility(),
         new InsertionCost(),
         new InsertionTravelTime(),
@@ -49,7 +48,8 @@ public class StEvaluation {
         new TimeLeft(),
         new Slack());
 
-    Evaluator.evaluate(list, "glob:**0.50-20-1.00-[0-19].scen");
+    Evaluator.evaluate(list, "glob:**0.50-20-1.00-[0-1]*[0-9].scen");
+    System.out.println("Done.");
   }
 
 }
