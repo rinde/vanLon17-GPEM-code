@@ -15,6 +15,7 @@
  */
 package com.github.rinde.gpem17;
 
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 
@@ -28,6 +29,7 @@ import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.InsertionTrave
 import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.Slack;
 import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.Time;
 import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.TimeLeft;
+import com.github.rinde.rinsim.io.FileProvider;
 
 /**
  * 
@@ -48,7 +50,10 @@ public class StEvaluation {
         new TimeLeft(),
         new Slack());
 
-    Evaluator.evaluate(list, "regex:.*0\\.50-20-1\\.00-[01]?[0-9]\\.scen");
+    Evaluator.evaluate(list,
+      FileProvider.builder()
+        .add(Paths.get(Evaluator.TRAINSET_PATH))
+        .filter("regex:.*0\\.50-20-1\\.00-[01]?[0-9]\\.scen").build().get());
     System.out.println("Done.");
   }
 

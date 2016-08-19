@@ -15,15 +15,21 @@
  */
 package com.github.rinde.gpem17;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Arrays.asList;
 
 import java.io.File;
 import java.io.Serializable;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
 
@@ -72,6 +78,7 @@ import com.github.rinde.rinsim.ui.renderers.PDPModelRenderer;
 import com.github.rinde.rinsim.ui.renderers.PlaneRoadModelRenderer;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.SetMultimap;
 
 import ec.EvolutionState;
@@ -82,28 +89,45 @@ import ec.EvolutionState;
  */
 public class Evaluator extends BaseEvaluator {
 
+  static final String TRAINSET_PATH = "files/train-dataset";
   static final long MAX_SIM_TIME = 8 * 60 * 60 * 1000L;
+  static final int NUM_SCENS_PER_GEN = 3;
+
+  static final Pattern CAPTURE_INSTANCE_ID =
+    Pattern.compile(".*-(\\d+?)\\.scen");
 
   static final Gendreau06ObjectiveFunction OBJ_FUNC =
     Gendreau06ObjectiveFunction.instance(50d);
 
+  final ImmutableList<Path> paths;
+
   public Evaluator() {
     super();
 
-    // System.out.println(FileProvider.builder()
-    // .add(Paths.get("files/train-dataset"))
-    // .filter("regex:.*0\\.50-20-1\\.00-[01]?[0-9]\\.scen")
-    // .build().get());
+    List<Path> ps = new ArrayList<>(FileProvider.builder()
+      .add(Paths.get(TRAINSET_PATH))
+      .filter("regex:.*0\\.50-20-1\\.00-.*\\.scen")
+      .build().get().asList());
 
-    //
+    // sort on instance id
+    Collections.sort(ps, new Comparator<Path>() {
+      @Override
+      public int compare(Path o1, Path o2) {
+        Matcher m1 = CAPTURE_INSTANCE_ID.matcher(o1.getFileName().toString());
+        Matcher m2 = CAPTURE_INSTANCE_ID.matcher(o2.getFileName().toString());
+        checkArgument(m1.matches() && m2.matches());
+        int id1 = Integer.parseInt(m1.group(1));
+        int id2 = Integer.parseInt(m2.group(1));
+        return Integer.compare(id1, id2);
+      }
+    });
+    paths = ImmutableList.copyOf(ps);
   }
 
   static Experiment.Builder experimentBuilder(boolean showGui,
-      String scenarioFileFilter) {
+      Iterable<Path> scenarioPaths) {
     return Experiment.builder()
-      .addScenarios(FileProvider.builder()
-        .add(Paths.get("files/train-dataset"))
-        .filter(scenarioFileFilter))// "glob:**0.50-20-1.00-0.scen").)
+      .addScenarios(FileProvider.builder().add(scenarioPaths))
       .setScenarioReader(
         ScenarioIO.readerAdapter(Converter.INSTANCE))
       // .withThreads(1)
@@ -123,22 +147,19 @@ public class Evaluator extends BaseEvaluator {
   }
 
   static void evaluate(Iterable<GPFunc<GpGlobal>> funcs,
-      String scenarioFileFilter) {
+      Iterable<Path> scenarioPaths) {
     Experiment.Builder expBuilder =
-      experimentBuilder(false, scenarioFileFilter);
+      experimentBuilder(false, scenarioPaths);
 
     Map<MASConfiguration, String> map = new LinkedHashMap<>();
     for (GPFunc<GpGlobal> func : funcs) {
       GPProgram<GpGlobal> prog = new GPProgram<>(new GPFuncNode<>(func));
-      // GPProgramParser.convertToGPProgram(new GPBaseNode<>(func));
 
       MASConfiguration config = createConfig(prog);
       map.put(config, prog.getId());
       expBuilder.addConfiguration(config);
     }
-
     ExperimentResults results = expBuilder.perform();
-
     File dest = new File("files/results/test.csv");
 
     StatsLogger.createHeader(dest);
@@ -150,12 +171,14 @@ public class Evaluator extends BaseEvaluator {
 
   @Override
   public void evaluatePopulation(EvolutionState state) {
-
     SetMultimap<GPNodeHolder, IndividualHolder> mapping =
       getGPFitnessMapping(state);
+    int fromIndex = state.generation * NUM_SCENS_PER_GEN;
+    int toIndex = fromIndex + NUM_SCENS_PER_GEN;
 
+    System.out.println(paths.subList(fromIndex, toIndex));
     Experiment.Builder expBuilder =
-      experimentBuilder(false, "glob:**0.50-20-1.00-0.scen");
+      experimentBuilder(false, paths.subList(fromIndex, toIndex));
 
     Map<MASConfiguration, GPNodeHolder> configGpMapping = new LinkedHashMap<>();
     for (GPNodeHolder node : mapping.keySet()) {
