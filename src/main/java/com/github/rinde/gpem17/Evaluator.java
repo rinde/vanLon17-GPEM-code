@@ -15,6 +15,9 @@
  */
 package com.github.rinde.gpem17;
 
+import static java.util.Arrays.asList;
+
+import java.io.File;
 import java.io.Serializable;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -27,6 +30,8 @@ import javax.annotation.Nullable;
 import com.github.rinde.ecj.BaseEvaluator;
 import com.github.rinde.ecj.GPBaseNode;
 import com.github.rinde.ecj.GPComputationResult;
+import com.github.rinde.ecj.GPFunc;
+import com.github.rinde.ecj.GPFuncNode;
 import com.github.rinde.ecj.GPProgram;
 import com.github.rinde.ecj.GPProgramParser;
 import com.github.rinde.ecj.PriorityHeuristic;
@@ -82,16 +87,12 @@ public class Evaluator extends BaseEvaluator {
   static final Gendreau06ObjectiveFunction OBJ_FUNC =
     Gendreau06ObjectiveFunction.instance(50d);
 
-  @Override
-  public void evaluatePopulation(EvolutionState state) {
-
-    SetMultimap<GPNodeHolder, IndividualHolder> mapping =
-      getGPFitnessMapping(state);
-
-    Experiment.Builder expBuilder = Experiment.builder()
+  static Experiment.Builder experimentBuilder(boolean showGui,
+      String scenarioFileFilter) {
+    return Experiment.builder()
       .addScenarios(FileProvider.builder()
-        .add(Paths.get("files/vanLonHolvoet15"))
-        .filter("glob:**0.50-20-1.00-0.scen"))
+        .add(Paths.get("files/train-dataset"))
+        .filter(scenarioFileFilter))// "glob:**0.50-20-1.00-0.scen").)
       .setScenarioReader(
         ScenarioIO.readerAdapter(Converter.INSTANCE))
       // .withThreads(1)
@@ -106,8 +107,44 @@ public class Evaluator extends BaseEvaluator {
         .with(RoutePanel.builder())
         .with(RouteRenderer.builder())
         .with(TimeLinePanel.builder()))
-      .showGui(false)
+      .showGui(showGui)
       .usePostProcessor(AuctionPostProcessor.INSTANCE);
+  }
+
+  static void evaluate(Iterable<GPFunc<GpGlobal>> funcs,
+      String scenarioFileFilter) {
+    Experiment.Builder expBuilder =
+      experimentBuilder(false, scenarioFileFilter);
+
+    Map<MASConfiguration, String> map = new LinkedHashMap<>();
+    for (GPFunc<GpGlobal> func : funcs) {
+      GPProgram<GpGlobal> prog = new GPProgram<>(new GPFuncNode<>(func));
+      // GPProgramParser.convertToGPProgram(new GPBaseNode<>(func));
+
+      MASConfiguration config = createConfig(prog);
+      map.put(config, prog.getId());
+      expBuilder.addConfiguration(config);
+    }
+
+    ExperimentResults results = expBuilder.perform();
+
+    File dest = new File("files/results/test.csv");
+
+    StatsLogger.createHeader(dest);
+    for (SimulationResult sr : results.sortedResults()) {
+      StatsLogger.appendResults(asList(sr), dest,
+        map.get(sr.getSimArgs().getMasConfig()));
+    }
+  }
+
+  @Override
+  public void evaluatePopulation(EvolutionState state) {
+
+    SetMultimap<GPNodeHolder, IndividualHolder> mapping =
+      getGPFitnessMapping(state);
+
+    Experiment.Builder expBuilder =
+      experimentBuilder(false, "glob:**0.50-20-1.00-0.scen");
 
     Map<MASConfiguration, GPNodeHolder> configGpMapping = new LinkedHashMap<>();
     for (GPNodeHolder node : mapping.keySet()) {
@@ -119,7 +156,6 @@ public class Evaluator extends BaseEvaluator {
       final GPProgram<GpGlobal> prog = GPProgramParser
         .convertToGPProgram((GPBaseNode<GpGlobal>) node.trees[0].child);
 
-      System.out.println(prog);
       MASConfiguration config = createConfig(prog);
       configGpMapping.put(config, node);
       expBuilder.addConfiguration(config);

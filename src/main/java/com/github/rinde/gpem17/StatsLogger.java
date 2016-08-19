@@ -55,12 +55,16 @@ public class StatsLogger extends GPStats {
     statsLog = new File(experimentDirectory, "best-stats.csv");
 
     // create best-stats.csv with header
+    createHeader(statsLog);
+  }
+
+  static void createHeader(File dest) {
     try {
-      Files.createParentDirs(statsLog);
+      Files.createParentDirs(dest);
       Files.append(
         Joiner.on(",").appendTo(new StringBuilder(), CsvFields.values())
           .append(System.lineSeparator()),
-        statsLog,
+        dest,
         Charsets.UTF_8);
     } catch (final IOException e1) {
       throw new IllegalStateException(e1);
@@ -69,37 +73,34 @@ public class StatsLogger extends GPStats {
 
   public void setup(final EvolutionState state, final Parameter base) {
     super.setup(state, base);
-
   }
 
-  public void printMore(EvolutionState state, Individual best,
-      List<GPComputationResult> bestResults) {
-
+  static void appendResults(Iterable<SimulationResult> results, File dest,
+      String generationId) {
     StringBuilder sb = new StringBuilder();
-    for (GPComputationResult res : bestResults) {
-      SimulationResult sr = ((SingleResult) res).getSimulationResult();
-
+    for (SimulationResult sr : results) {
       ResultObject ro = (ResultObject) sr.getResultObject();
       StatisticsDTO stats = ro.getStats();
 
       final String pc = sr.getSimArgs().getScenario().getProblemClass().getId();
       final String id = sr.getSimArgs().getScenario().getProblemInstanceId();
       final String scenarioName = DASH_JOINER.join(pc, id);
-
+      boolean isValid = ListEvaluator.OBJ_FUNC.isValidResult(stats);
       double cost = ListEvaluator.OBJ_FUNC.computeCost(stats);
       final ImmutableMap.Builder<Enum<?>, Object> map =
         ImmutableMap.<Enum<?>, Object>builder()
-          .put(CsvFields.GENERATION, state.generation)
+          .put(CsvFields.GENERATION, generationId)
           .put(CsvFields.SCENARIO_ID, scenarioName)
           .put(CsvFields.RANDOM_SEED, sr.getSimArgs().getRandomSeed())
           .put(CsvFields.COST, cost)
           .put(CsvFields.TRAVEL_TIME, ListEvaluator.OBJ_FUNC.travelTime(stats))
           .put(CsvFields.TARDINESS, ListEvaluator.OBJ_FUNC.tardiness(stats))
           .put(CsvFields.OVER_TIME, ListEvaluator.OBJ_FUNC.overTime(stats))
-          .put(CsvFields.IS_VALID, ListEvaluator.OBJ_FUNC.isValidResult(stats))
+          .put(CsvFields.IS_VALID, isValid)
           .put(CsvFields.NUM_ORDERS, stats.totalParcels)
           .put(CsvFields.NUM_VEHICLES, stats.totalVehicles)
-          .put(CsvFields.COST_PER_PARCEL, cost / (double) stats.totalParcels);
+          .put(CsvFields.COST_PER_PARCEL,
+            isValid ? cost / (double) stats.totalParcels : "invalid");
 
       if (ro.getAuctionStats().isPresent()) {
         final AuctionStats aStats = ro.getAuctionStats().get();
@@ -118,10 +119,21 @@ public class StatsLogger extends GPStats {
     }
 
     try {
-      Files.append(sb.toString(), statsLog, Charsets.UTF_8);
+      Files.append(sb.toString(), dest, Charsets.UTF_8);
     } catch (IOException e) {
       throw new IllegalStateException(e);
     }
+  }
+
+  public void printMore(EvolutionState state, Individual best,
+      List<GPComputationResult> bestResults) {
+
+    List<SimulationResult> results = new ArrayList<>();
+    for (GPComputationResult res : bestResults) {
+      results.add(((SingleResult) res).getSimulationResult());
+    }
+
+    appendResults(results, statsLog, Integer.toString(state.generation));
 
     File programFile = new File(experimentDirectory,
       "programs/best-individual-" + state.generation + ".txt");
