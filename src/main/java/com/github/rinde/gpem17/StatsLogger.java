@@ -16,10 +16,11 @@
 package com.github.rinde.gpem17;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -168,13 +169,12 @@ public class StatsLogger extends GPStats {
     final File experimentDirectory = new File(target, timestamp);
     experimentDirectory.mkdirs();
 
-    final File latest = new File(target, "latest/");
-    if (latest.exists()) {
-      checkState(latest.delete());
-    }
+    final Path latest = Paths.get(target.getAbsolutePath(), "latest/");
+
     try {
+      java.nio.file.Files.deleteIfExists(latest);
       java.nio.file.Files.createSymbolicLink(
-        latest.toPath(),
+        latest,
         experimentDirectory.getAbsoluteFile().toPath());
     } catch (final IOException e) {
       throw new IllegalStateException(e);

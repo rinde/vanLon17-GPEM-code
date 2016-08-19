@@ -48,7 +48,7 @@ public class StEvaluation {
         new TimeLeft(),
         new Slack());
 
-    Evaluator.evaluate(list, "glob:**0.50-20-1.00-[0-1]*[0-9].scen");
+    Evaluator.evaluate(list, "regex:.*0\\.50-20-1\\.00-[01]?[0-9]\\.scen");
     System.out.println("Done.");
   }
 

@@ -87,6 +87,17 @@ public class Evaluator extends BaseEvaluator {
   static final Gendreau06ObjectiveFunction OBJ_FUNC =
     Gendreau06ObjectiveFunction.instance(50d);
 
+  public Evaluator() {
+    super();
+
+    // System.out.println(FileProvider.builder()
+    // .add(Paths.get("files/train-dataset"))
+    // .filter("regex:.*0\\.50-20-1\\.00-[01]?[0-9]\\.scen")
+    // .build().get());
+
+    //
+  }
+
   static Experiment.Builder experimentBuilder(boolean showGui,
       String scenarioFileFilter) {
     return Experiment.builder()
@@ -115,6 +126,8 @@ public class Evaluator extends BaseEvaluator {
       String scenarioFileFilter) {
     Experiment.Builder expBuilder =
       experimentBuilder(false, scenarioFileFilter);
+
+    expBuilder.dryRun(true, System.out, System.err);
 
     Map<MASConfiguration, String> map = new LinkedHashMap<>();
     for (GPFunc<GpGlobal> func : funcs) {
