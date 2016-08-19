@@ -214,7 +214,7 @@ public class Evaluator extends BaseEvaluator {
 
   @Override
   protected int expectedNumberOfResultsPerGPIndividual(EvolutionState state) {
-    return 1;
+    return NUM_SCENS_PER_GEN;
   }
 
   static MASConfiguration createConfig(PriorityHeuristic<GpGlobal> solver) {
