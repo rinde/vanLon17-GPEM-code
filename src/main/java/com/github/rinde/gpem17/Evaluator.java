@@ -127,8 +127,6 @@ public class Evaluator extends BaseEvaluator {
     Experiment.Builder expBuilder =
       experimentBuilder(false, scenarioFileFilter);
 
-    expBuilder.dryRun(true, System.out, System.err);
-
     Map<MASConfiguration, String> map = new LinkedHashMap<>();
     for (GPFunc<GpGlobal> func : funcs) {
       GPProgram<GpGlobal> prog = new GPProgram<>(new GPFuncNode<>(func));
