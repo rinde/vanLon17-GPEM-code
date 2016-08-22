@@ -45,13 +45,16 @@ import com.github.rinde.logistics.pdptw.mas.TruckFactory.DefaultTruckFactory;
 import com.github.rinde.logistics.pdptw.mas.comm.AuctionCommModel;
 import com.github.rinde.logistics.pdptw.mas.comm.AuctionPanel;
 import com.github.rinde.logistics.pdptw.mas.comm.AuctionStopConditions;
+import com.github.rinde.logistics.pdptw.mas.comm.Communicator;
 import com.github.rinde.logistics.pdptw.mas.comm.DoubleBid;
-import com.github.rinde.logistics.pdptw.mas.comm.RtSolverBidder.BidFunction;
-import com.github.rinde.logistics.pdptw.mas.comm.RtSolverBidder.BidFunctions;
+import com.github.rinde.logistics.pdptw.mas.route.RoutePlanner;
 import com.github.rinde.logistics.pdptw.mas.route.RtSolverRoutePlanner;
 import com.github.rinde.logistics.pdptw.solver.CheapestInsertionHeuristic;
 import com.github.rinde.rinsim.central.SolverModel;
+import com.github.rinde.rinsim.central.rt.RtSolverModel;
+import com.github.rinde.rinsim.central.rt.RtStAdapters;
 import com.github.rinde.rinsim.core.Simulator;
+import com.github.rinde.rinsim.core.model.time.RealtimeClockLogger;
 import com.github.rinde.rinsim.core.model.time.TimeModel;
 import com.github.rinde.rinsim.experiment.Experiment;
 import com.github.rinde.rinsim.experiment.Experiment.SimArgs;
@@ -74,6 +77,8 @@ import com.github.rinde.rinsim.scenario.gendreau06.Gendreau06ObjectiveFunction;
 import com.github.rinde.rinsim.ui.View;
 import com.github.rinde.rinsim.ui.renderers.PDPModelRenderer;
 import com.github.rinde.rinsim.ui.renderers.PlaneRoadModelRenderer;
+import com.github.rinde.rinsim.ui.renderers.RoadUserRenderer;
+import com.github.rinde.rinsim.util.StochasticSupplier;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
@@ -156,6 +161,7 @@ public class Evaluator extends BaseEvaluator {
         .withResolution(1280, 768)
         .with(PlaneRoadModelRenderer.builder())
         .with(PDPModelRenderer.builder())
+        .with(RoadUserRenderer.builder().withToStringLabel())
         .with(AuctionPanel.builder())
         .with(RoutePanel.builder())
         .with(RouteRenderer.builder())
@@ -177,8 +183,7 @@ public class Evaluator extends BaseEvaluator {
 
     Map<MASConfiguration, String> map = new LinkedHashMap<>();
     for (GPProgram<GpGlobal> prog : progs) {
-
-      MASConfiguration config = createConfig(prog);
+      MASConfiguration config = createStConfig(prog);
       map.put(config, prog.getId());
       expBuilder.addConfiguration(config);
     }
@@ -213,7 +218,7 @@ public class Evaluator extends BaseEvaluator {
       final GPProgram<GpGlobal> prog = GPProgramParser
         .convertToGPProgram((GPBaseNode<GpGlobal>) node.trees[0].child);
 
-      MASConfiguration config = createConfig(prog);
+      MASConfiguration config = createStConfig(prog);
       configGpMapping.put(config, node);
       expBuilder.addConfiguration(config);
     }
@@ -240,17 +245,45 @@ public class Evaluator extends BaseEvaluator {
     return numScenariosPerGen;
   }
 
-  static MASConfiguration createConfig(PriorityHeuristic<GpGlobal> solver) {
-    final BidFunction bf = BidFunctions.BALANCED_HIGH;
-    return MASConfiguration.pdptwBuilder()
-      .setName("ReAuction-RP-EVO-BID-EVO-" + bf + "-" + solver.getId())
+  static MASConfiguration createStConfig(PriorityHeuristic<GpGlobal> solver) {
+    StochasticSupplier<RoutePlanner> rp =
+      RtSolverRoutePlanner.simulatedTimeSupplier(
+        CheapestInsertionHeuristic.supplier(OBJ_FUNC));
+
+    StochasticSupplier<? extends Communicator> cm =
+      EvoBidder.simulatedTimeBuilder(solver, OBJ_FUNC)
+        .withReauctionCooldownPeriod(60000);
+
+    String name = "ReAuction-RP-EVO-BID-EVO-" + solver.getId();
+
+    return createConfig(solver, rp, cm, false, name);
+  }
+
+  static MASConfiguration createRtConfig(PriorityHeuristic<GpGlobal> solver,
+      String id) {
+    StochasticSupplier<RoutePlanner> rp =
+      RtSolverRoutePlanner.supplier(
+        RtStAdapters.toRealtime(CheapestInsertionHeuristic.supplier(OBJ_FUNC)));
+
+    StochasticSupplier<? extends Communicator> cm =
+      EvoBidder.realtimeBuilder(solver, OBJ_FUNC)
+        .withReauctionCooldownPeriod(60000);
+
+    String name = "ReAuction-RP-EVO-BID-EVO-" + id;
+    return createConfig(solver, rp, cm, true, name);
+  }
+
+  static MASConfiguration createConfig(PriorityHeuristic<GpGlobal> solver,
+      StochasticSupplier<? extends RoutePlanner> rp,
+      StochasticSupplier<? extends Communicator> cm,
+      boolean rt,
+      String name) {
+    MASConfiguration.Builder builder = MASConfiguration.pdptwBuilder()
+      .setName(name)
       .addEventHandler(AddVehicleEvent.class,
         DefaultTruckFactory.builder()
-          .setRoutePlanner(
-            RtSolverRoutePlanner.simulatedTimeSupplier(
-              CheapestInsertionHeuristic.supplier(OBJ_FUNC)))
-          .setCommunicator(EvoBidder.simulatedTimeBuilder(solver, OBJ_FUNC)
-            .withReauctionCooldownPeriod(60000))
+          .setRoutePlanner(rp)
+          .setCommunicator(cm)
           .setLazyComputation(false)
           .setRouteAdjuster(RouteFollowingVehicle.delayAdjuster())
           .build())
@@ -261,10 +294,19 @@ public class Evaluator extends BaseEvaluator {
             AuctionStopConditions.<DoubleBid>or(
               AuctionStopConditions.<DoubleBid>allBidders(),
               AuctionStopConditions.<DoubleBid>maxAuctionDuration(5000))))
-        .withMaxAuctionDuration(30 * 60 * 1000L))
-      .addModel(SolverModel.builder())
-      // .addEventHandler(AddParcelEvent.class, AddParcelEvent.namedHandler())
-      .build();
+        .withMaxAuctionDuration(30 * 60 * 1000L));
+
+    if (rt) {
+      builder
+        .addModel(RtSolverModel.builder()
+          .withThreadPoolSize(3)
+          .withThreadGrouping(true))
+        .addModel(RealtimeClockLogger.builder());
+    } else {
+      builder.addModel(SolverModel.builder());
+    }
+    // .addEventHandler(AddParcelEvent.class, AddParcelEvent.namedHandler())
+    return builder.build();
   }
 
   enum Converter implements Function<Scenario, Scenario> {
@@ -284,11 +326,9 @@ public class Evaluator extends BaseEvaluator {
 
   enum AuctionPostProcessor
     implements PostProcessor<ResultObject>,Serializable {
-
     INSTANCE {
       @Override
       public ResultObject collectResults(Simulator sim, SimArgs args) {
-
         @Nullable
         final AuctionCommModel<?> auctionModel =
           sim.getModelProvider().tryGetModel(AuctionCommModel.class);
@@ -307,7 +347,6 @@ public class Evaluator extends BaseEvaluator {
 
         final StatisticsDTO stats =
           sim.getModelProvider().getModel(StatsTracker.class).getStatistics();
-
         return ResultObject.create(stats, aStats);
       }
 

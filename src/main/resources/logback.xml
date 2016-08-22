@@ -21,7 +21,7 @@
 
 	<!-- suppress RinSim logs -->
 	<logger name="com.github.rinde.rinsim" level="WARN" />
-	<logger name="com.github.rinde.rinsim.experiment" level="TRACE" />
+	<logger name="com.github.rinde.rinsim.experiment" level="WARN" />
 	<logger name="com.github.rinde.rinsim.central.rt" level="WARN" />
 	<logger name="com.github.rinde.rinsim.central.rt.RtSolverModel" level="WARN" />
 	<logger name="com.github.rinde.rinsim.core.model.time" level="WARN" />
