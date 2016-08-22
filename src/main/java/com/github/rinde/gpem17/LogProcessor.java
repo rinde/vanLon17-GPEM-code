@@ -77,7 +77,7 @@ class LogProcessor implements PostProcessor<RtExperimentInfo>, Serializable {
     e.printStackTrace();
     // System.out.println(AffinityLock.dumpLocks());
 
-    return FailureStrategy.INCLUDE;
+    return FailureStrategy.RETRY;
     // return FailureStrategy.ABORT_EXPERIMENT_RUN;
 
   }

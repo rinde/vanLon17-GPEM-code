@@ -99,7 +99,6 @@ public class RtEvaluation {
 
     List<GPProgram<GpGlobal>> programs = asList(
       GPProgramParser.parseProgramFunc("(insertioncost)", funcs),
-      GPProgramParser.parseProgramFunc("(slack)", funcs),
       GPProgramParser.parseProgramFunc(
         // best at gen 28
         "(- (max (- (pow insertioncost 2.0) (max (neg 10.0) insertiontardiness)) 2.0) (+ (- (- 10.0 (pow (/ 0.0 slack) (+ timeleft insertioncost))) (if4 2.0 (max timeleft insertioncost) (neg (x (if4 (x 2.0 (if4 insertiontardiness (if4 (- insertiontardiness 2.0) (min 0.0 insertiontraveltime) (if4 2.0 timeleft 10.0 10.0) (x 2.0 2.0)) (if4 2.0 timeleft 10.0 10.0) (max insertionovertime insertionovertime))) (neg 0.0) (pow insertiontraveltime insertionflexibility) (min (+ timeleft insertioncost) insertiontraveltime)) (min time insertiontardiness))) (min 0.0 insertiontraveltime))) (if4 (x (+ insertionflexibility 10.0) (x 10.0 10.0)) (- 1.0 insertionflexibility) (neg insertiontraveltime) slack)))",
