@@ -36,8 +36,6 @@ import javax.annotation.Nullable;
 import com.github.rinde.ecj.BaseEvaluator;
 import com.github.rinde.ecj.GPBaseNode;
 import com.github.rinde.ecj.GPComputationResult;
-import com.github.rinde.ecj.GPFunc;
-import com.github.rinde.ecj.GPFuncNode;
 import com.github.rinde.ecj.GPProgram;
 import com.github.rinde.ecj.GPProgramParser;
 import com.github.rinde.ecj.PriorityHeuristic;
@@ -172,14 +170,13 @@ public class Evaluator extends BaseEvaluator {
     return builder;
   }
 
-  static void evaluate(Iterable<GPFunc<GpGlobal>> funcs,
+  static void evaluate(Iterable<GPProgram<GpGlobal>> progs,
       Iterable<Path> scenarioPaths, boolean distributed) {
     Experiment.Builder expBuilder =
       experimentBuilder(false, scenarioPaths, distributed);
 
     Map<MASConfiguration, String> map = new LinkedHashMap<>();
-    for (GPFunc<GpGlobal> func : funcs) {
-      GPProgram<GpGlobal> prog = new GPProgram<>(new GPFuncNode<>(func));
+    for (GPProgram<GpGlobal> prog : progs) {
 
       MASConfiguration config = createConfig(prog);
       map.put(config, prog.getId());
@@ -246,7 +243,7 @@ public class Evaluator extends BaseEvaluator {
   static MASConfiguration createConfig(PriorityHeuristic<GpGlobal> solver) {
     final BidFunction bf = BidFunctions.BALANCED_HIGH;
     return MASConfiguration.pdptwBuilder()
-      .setName("ReAuction-RP-EVO-BID-EVO-" + bf)
+      .setName("ReAuction-RP-EVO-BID-EVO-" + bf + "-" + solver.getId())
       .addEventHandler(AddVehicleEvent.class,
         DefaultTruckFactory.builder()
           .setRoutePlanner(
