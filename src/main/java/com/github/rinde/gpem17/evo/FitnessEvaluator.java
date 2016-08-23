@@ -135,6 +135,7 @@ public class FitnessEvaluator extends BaseEvaluator {
         ScenarioIO.readerAdapter(Converter.INSTANCE))
       .showGui(GPEM17.gui())
       .showGui(false)
+      .withRandomSeed(state.random[0].nextLong())
       .usePostProcessor(AuctionPostProcessor.INSTANCE);
 
     if (distributed) {
