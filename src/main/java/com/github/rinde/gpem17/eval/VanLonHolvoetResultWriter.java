@@ -64,7 +64,7 @@ public class VanLonHolvoetResultWriter extends ResultWriter {
     try {
       final String scenarioName = Joiner.on("-").join(pc, id);
       final List<String> propsStrings = Files.readLines(new File(
-        Evaluation.DATASET_PATH + scenarioName
+        Evaluate.DATASET_PATH + scenarioName
           + ".properties"),
         Charsets.UTF_8);
       final Map<String, String> properties = Splitter.on("\n")

@@ -47,7 +47,7 @@ import ec.util.Parameter;
  * @author Rinde van Lon
  */
 public class StatsLogger extends GPStats {
-  static final String RESULTS_MAIN_DIR = "files/results/";
+  static final String RESULTS_MAIN_DIR = "files/results/evo/";
   static final Joiner DASH_JOINER = Joiner.on("-");
   static final Joiner COMMA_JOINER = Joiner.on(",");
   final File experimentDirectory;

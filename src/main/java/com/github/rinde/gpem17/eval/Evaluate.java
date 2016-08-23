@@ -54,7 +54,7 @@ import com.google.common.io.Files;
  * 
  * @author Rinde van Lon
  */
-public class Evaluation {
+public class Evaluate {
   static final String DATASET_PATH = "files/vanLonHolvoet15/";
   static final String RT_RESULTS_DIR = "files/results/realtime/";
   static final String ST_RESULTS_DIR = "files/results/simtime/";
@@ -70,11 +70,12 @@ public class Evaluation {
       + System.getProperty("os.arch"));
     checkArgument(System.getProperty("java.vm.name").contains("Server"),
       "Experiments should be run in a JVM in server mode.");
-    checkArgument(args.length > 1
+    checkArgument(args.length >= 1
       && (args[0].equals("simtime") || args[0].equals("realtime")),
-      "The first argument should be 'simtime' or 'realtime'");
+      "The first argument should be 'simtime' or 'realtime', found '%s'.",
+      args[0]);
     boolean realtime = args[0].equals("realtime");
-    checkArgument(args.length > 2,
+    checkArgument(args.length >= 2,
       "The second argument should be a path to a txt file containing the "
         + "programs to evaluate.");
 

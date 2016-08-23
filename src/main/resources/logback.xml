@@ -30,9 +30,11 @@
 	<logger name="com.github.rinde.logistics.pdptw" level="WARN" />
 	<logger name="com.github.rinde.logistics.pdptw.mas" level="WARN" />
 	<logger name="com.github.rinde.logistics.pdptw.mas.comm" level="WARN" />
-	<logger name="com.github.rinde.gpem17" level="INFO" />
 	<logger name="com.github.rinde.logistics.pdptw.solver.optaplanner" level="WARN" />
+	<logger name="com.github.rinde.gpem17" level="WARN" />
 	<logger name="org.optaplanner" level="WARN" />
+	<logger name="net.openhft.affinity" level="WARN" />
+	 
 
 	<root level="INFO">
 		<appender-ref ref="STDOUT" />
