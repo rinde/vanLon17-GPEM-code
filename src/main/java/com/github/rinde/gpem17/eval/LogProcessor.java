@@ -1,4 +1,4 @@
-package com.github.rinde.gpem17;
+package com.github.rinde.gpem17.eval;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -8,6 +8,7 @@ import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.rinde.gpem17.AuctionStats;
 import com.github.rinde.logistics.pdptw.mas.comm.AuctionCommModel;
 import com.github.rinde.rinsim.core.Simulator;
 import com.github.rinde.rinsim.core.model.time.RealtimeClockLogger;
@@ -25,7 +26,7 @@ class LogProcessor implements PostProcessor<RtExperimentInfo>, Serializable {
   static final Logger LOGGER = LoggerFactory.getLogger(LogProcessor.class);
 
   private static final long serialVersionUID = 5997690791395717045L;
-  ObjectiveFunction objectiveFunction;
+  final ObjectiveFunction objectiveFunction;
 
   LogProcessor(ObjectiveFunction objFunc) {
     objectiveFunction = objFunc;

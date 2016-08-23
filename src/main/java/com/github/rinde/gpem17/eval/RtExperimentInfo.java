@@ -1,8 +1,9 @@
-package com.github.rinde.gpem17;
+package com.github.rinde.gpem17.eval;
 
 import java.io.Serializable;
 import java.util.List;
 
+import com.github.rinde.gpem17.AuctionStats;
 import com.github.rinde.rinsim.core.model.time.RealtimeClockLogger.LogEntry;
 import com.github.rinde.rinsim.core.model.time.RealtimeTickInfo;
 import com.github.rinde.rinsim.pdptw.common.StatisticsDTO;

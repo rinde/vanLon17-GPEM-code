@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.rinde.gpem17;
+package com.github.rinde.gpem17.evo;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static java.util.Arrays.asList;
 
-import java.io.File;
 import java.io.Serializable;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -38,23 +36,11 @@ import com.github.rinde.ecj.GPBaseNode;
 import com.github.rinde.ecj.GPComputationResult;
 import com.github.rinde.ecj.GPProgram;
 import com.github.rinde.ecj.GPProgramParser;
-import com.github.rinde.ecj.PriorityHeuristic;
-import com.github.rinde.evo4mas.common.EvoBidder;
 import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.GpGlobal;
-import com.github.rinde.logistics.pdptw.mas.TruckFactory.DefaultTruckFactory;
+import com.github.rinde.gpem17.AuctionStats;
+import com.github.rinde.gpem17.GPEM17;
 import com.github.rinde.logistics.pdptw.mas.comm.AuctionCommModel;
-import com.github.rinde.logistics.pdptw.mas.comm.AuctionPanel;
-import com.github.rinde.logistics.pdptw.mas.comm.AuctionStopConditions;
-import com.github.rinde.logistics.pdptw.mas.comm.Communicator;
-import com.github.rinde.logistics.pdptw.mas.comm.DoubleBid;
-import com.github.rinde.logistics.pdptw.mas.route.RoutePlanner;
-import com.github.rinde.logistics.pdptw.mas.route.RtSolverRoutePlanner;
-import com.github.rinde.logistics.pdptw.solver.CheapestInsertionHeuristic;
-import com.github.rinde.rinsim.central.SolverModel;
-import com.github.rinde.rinsim.central.rt.RtSolverModel;
-import com.github.rinde.rinsim.central.rt.RtStAdapters;
 import com.github.rinde.rinsim.core.Simulator;
-import com.github.rinde.rinsim.core.model.time.RealtimeClockLogger;
 import com.github.rinde.rinsim.core.model.time.TimeModel;
 import com.github.rinde.rinsim.experiment.Experiment;
 import com.github.rinde.rinsim.experiment.Experiment.SimArgs;
@@ -63,22 +49,11 @@ import com.github.rinde.rinsim.experiment.ExperimentResults;
 import com.github.rinde.rinsim.experiment.MASConfiguration;
 import com.github.rinde.rinsim.experiment.PostProcessor;
 import com.github.rinde.rinsim.io.FileProvider;
-import com.github.rinde.rinsim.pdptw.common.AddVehicleEvent;
-import com.github.rinde.rinsim.pdptw.common.RouteFollowingVehicle;
-import com.github.rinde.rinsim.pdptw.common.RoutePanel;
-import com.github.rinde.rinsim.pdptw.common.RouteRenderer;
 import com.github.rinde.rinsim.pdptw.common.StatisticsDTO;
 import com.github.rinde.rinsim.pdptw.common.StatsTracker;
-import com.github.rinde.rinsim.pdptw.common.TimeLinePanel;
 import com.github.rinde.rinsim.scenario.Scenario;
 import com.github.rinde.rinsim.scenario.ScenarioIO;
 import com.github.rinde.rinsim.scenario.StopConditions;
-import com.github.rinde.rinsim.scenario.gendreau06.Gendreau06ObjectiveFunction;
-import com.github.rinde.rinsim.ui.View;
-import com.github.rinde.rinsim.ui.renderers.PDPModelRenderer;
-import com.github.rinde.rinsim.ui.renderers.PlaneRoadModelRenderer;
-import com.github.rinde.rinsim.ui.renderers.RoadUserRenderer;
-import com.github.rinde.rinsim.util.StochasticSupplier;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
@@ -91,7 +66,7 @@ import ec.util.Parameter;
  * 
  * @author Rinde van Lon
  */
-public class Evaluator extends BaseEvaluator {
+public class FitnessEvaluator extends BaseEvaluator {
 
   enum Properties {
     DISTRIBUTED, NUM_SCENARIOS_PER_GEN;
@@ -107,14 +82,11 @@ public class Evaluator extends BaseEvaluator {
   static final Pattern CAPTURE_INSTANCE_ID =
     Pattern.compile(".*-(\\d+?)\\.scen");
 
-  static final Gendreau06ObjectiveFunction OBJ_FUNC =
-    Gendreau06ObjectiveFunction.instance(50d);
-
   final ImmutableList<Path> paths;
   boolean distributed;
   int numScenariosPerGen;
 
-  public Evaluator() {
+  public FitnessEvaluator() {
     super();
 
     List<Path> ps = new ArrayList<>(FileProvider.builder()
@@ -147,56 +119,6 @@ public class Evaluator extends BaseEvaluator {
         base.push(Properties.NUM_SCENARIOS_PER_GEN.toString()), null);
   }
 
-  static Experiment.Builder experimentBuilder(boolean showGui,
-      Iterable<Path> scenarioPaths, boolean distributed) {
-    Experiment.Builder builder = Experiment.builder()
-      .addScenarios(FileProvider.builder().add(scenarioPaths))
-      .setScenarioReader(
-        ScenarioIO.readerAdapter(Converter.INSTANCE))
-      // .withThreads(1)
-      .showGui(View.builder()
-        .withAutoPlay()
-        .withSpeedUp(64)
-        .withAutoClose()
-        .withResolution(1280, 768)
-        .with(PlaneRoadModelRenderer.builder())
-        .with(PDPModelRenderer.builder())
-        .with(RoadUserRenderer.builder().withToStringLabel())
-        .with(AuctionPanel.builder())
-        .with(RoutePanel.builder())
-        .with(RouteRenderer.builder())
-        .with(TimeLinePanel.builder()))
-      .showGui(showGui)
-      .usePostProcessor(AuctionPostProcessor.INSTANCE);
-
-    if (distributed) {
-      builder.computeDistributed();
-    }
-
-    return builder;
-  }
-
-  static void evaluate(Iterable<GPProgram<GpGlobal>> progs,
-      Iterable<Path> scenarioPaths, boolean distributed) {
-    Experiment.Builder expBuilder =
-      experimentBuilder(false, scenarioPaths, distributed);
-
-    Map<MASConfiguration, String> map = new LinkedHashMap<>();
-    for (GPProgram<GpGlobal> prog : progs) {
-      MASConfiguration config = createStConfig(prog);
-      map.put(config, prog.getId());
-      expBuilder.addConfiguration(config);
-    }
-    ExperimentResults results = expBuilder.perform();
-    File dest = new File("files/results/test.csv");
-
-    StatsLogger.createHeader(dest);
-    for (SimulationResult sr : results.sortedResults()) {
-      StatsLogger.appendResults(asList(sr), dest,
-        map.get(sr.getSimArgs().getMasConfig()));
-    }
-  }
-
   @Override
   public void evaluatePopulation(EvolutionState state) {
     SetMultimap<GPNodeHolder, IndividualHolder> mapping =
@@ -205,8 +127,19 @@ public class Evaluator extends BaseEvaluator {
     int toIndex = fromIndex + numScenariosPerGen;
 
     System.out.println(paths.subList(fromIndex, toIndex));
-    Experiment.Builder expBuilder =
-      experimentBuilder(false, paths.subList(fromIndex, toIndex), distributed);
+
+    Experiment.Builder expBuilder = Experiment.builder()
+      .addScenarios(
+        FileProvider.builder().add(paths.subList(fromIndex, toIndex)))
+      .setScenarioReader(
+        ScenarioIO.readerAdapter(Converter.INSTANCE))
+      .showGui(GPEM17.gui())
+      .showGui(false)
+      .usePostProcessor(AuctionPostProcessor.INSTANCE);
+
+    if (distributed) {
+      expBuilder.computeDistributed();
+    }
 
     Map<MASConfiguration, GPNodeHolder> configGpMapping = new LinkedHashMap<>();
     for (GPNodeHolder node : mapping.keySet()) {
@@ -218,7 +151,7 @@ public class Evaluator extends BaseEvaluator {
       final GPProgram<GpGlobal> prog = GPProgramParser
         .convertToGPProgram((GPBaseNode<GpGlobal>) node.trees[0].child);
 
-      MASConfiguration config = createStConfig(prog);
+      MASConfiguration config = GPEM17.createStConfig(prog, prog.getId());
       configGpMapping.put(config, node);
       expBuilder.addConfiguration(config);
     }
@@ -228,9 +161,9 @@ public class Evaluator extends BaseEvaluator {
 
     for (SimulationResult sr : results.getResults()) {
       StatisticsDTO stats = ((ResultObject) sr.getResultObject()).getStats();
-      double cost = OBJ_FUNC.computeCost(stats);
+      double cost = GPEM17.OBJ_FUNC.computeCost(stats);
       float fitness = (float) cost;
-      if (!OBJ_FUNC.isValidResult(stats)) {
+      if (!GPEM17.OBJ_FUNC.isValidResult(stats)) {
         fitness = Float.MAX_VALUE;
       }
       String id = configGpMapping.get(sr.getSimArgs().getMasConfig()).string;
@@ -243,70 +176,6 @@ public class Evaluator extends BaseEvaluator {
   @Override
   protected int expectedNumberOfResultsPerGPIndividual(EvolutionState state) {
     return numScenariosPerGen;
-  }
-
-  static MASConfiguration createStConfig(PriorityHeuristic<GpGlobal> solver) {
-    StochasticSupplier<RoutePlanner> rp =
-      RtSolverRoutePlanner.simulatedTimeSupplier(
-        CheapestInsertionHeuristic.supplier(OBJ_FUNC));
-
-    StochasticSupplier<? extends Communicator> cm =
-      EvoBidder.simulatedTimeBuilder(solver, OBJ_FUNC)
-        .withReauctionCooldownPeriod(60000);
-
-    String name = "ReAuction-RP-EVO-BID-EVO-" + solver.getId();
-
-    return createConfig(solver, rp, cm, false, name);
-  }
-
-  static MASConfiguration createRtConfig(PriorityHeuristic<GpGlobal> solver,
-      String id) {
-    StochasticSupplier<RoutePlanner> rp =
-      RtSolverRoutePlanner.supplier(
-        RtStAdapters.toRealtime(CheapestInsertionHeuristic.supplier(OBJ_FUNC)));
-
-    StochasticSupplier<? extends Communicator> cm =
-      EvoBidder.realtimeBuilder(solver, OBJ_FUNC)
-        .withReauctionCooldownPeriod(60000);
-
-    String name = "ReAuction-RP-EVO-BID-EVO-" + id;
-    return createConfig(solver, rp, cm, true, name);
-  }
-
-  static MASConfiguration createConfig(PriorityHeuristic<GpGlobal> solver,
-      StochasticSupplier<? extends RoutePlanner> rp,
-      StochasticSupplier<? extends Communicator> cm,
-      boolean rt,
-      String name) {
-    MASConfiguration.Builder builder = MASConfiguration.pdptwBuilder()
-      .setName(name)
-      .addEventHandler(AddVehicleEvent.class,
-        DefaultTruckFactory.builder()
-          .setRoutePlanner(rp)
-          .setCommunicator(cm)
-          .setLazyComputation(false)
-          .setRouteAdjuster(RouteFollowingVehicle.delayAdjuster())
-          .build())
-      .addModel(AuctionCommModel.builder(DoubleBid.class)
-        .withStopCondition(
-          AuctionStopConditions.and(
-            AuctionStopConditions.<DoubleBid>atLeastNumBids(2),
-            AuctionStopConditions.<DoubleBid>or(
-              AuctionStopConditions.<DoubleBid>allBidders(),
-              AuctionStopConditions.<DoubleBid>maxAuctionDuration(5000))))
-        .withMaxAuctionDuration(30 * 60 * 1000L));
-
-    if (rt) {
-      builder
-        .addModel(RtSolverModel.builder()
-          .withThreadPoolSize(3)
-          .withThreadGrouping(true))
-        .addModel(RealtimeClockLogger.builder());
-    } else {
-      builder.addModel(SolverModel.builder());
-    }
-    // .addEventHandler(AddParcelEvent.class, AddParcelEvent.namedHandler())
-    return builder.build();
   }
 
   enum Converter implements Function<Scenario, Scenario> {

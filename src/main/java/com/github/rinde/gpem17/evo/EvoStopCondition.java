@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.rinde.gpem17;
+package com.github.rinde.gpem17.evo;
 
 import com.github.rinde.rinsim.core.model.time.Clock;
 import com.github.rinde.rinsim.pdptw.common.StatisticsDTO;
@@ -25,7 +25,7 @@ import com.google.common.collect.ImmutableSet;
  * 
  * @author Rinde van Lon
  */
-public enum EvoStopCondition implements StopCondition {
+enum EvoStopCondition implements StopCondition {
   INSTANCE {
     private final long MAX_TIME = 2 * 60 * 60 * 1000L;
 

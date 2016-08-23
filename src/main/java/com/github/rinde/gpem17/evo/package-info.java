@@ -13,19 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.rinde.gpem17;
-
-import ec.Evolve;
-
 /**
  * 
  * @author Rinde van Lon
  */
-public class PerformExperiment {
-
-  public static void main(String[] args) {
-
-    Evolve.main(new String[] {"-file", "files/config/simple-example.params"});
-  }
-
-}
+package com.github.rinde.gpem17.evo;

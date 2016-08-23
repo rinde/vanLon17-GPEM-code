@@ -1,4 +1,4 @@
-package com.github.rinde.gpem17;
+package com.github.rinde.gpem17.evo;
 
 import com.github.rinde.ecj.GPComputationResult;
 import com.github.rinde.rinsim.experiment.Experiment.SimulationResult;

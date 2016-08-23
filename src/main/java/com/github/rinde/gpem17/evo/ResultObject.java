@@ -1,7 +1,8 @@
-package com.github.rinde.gpem17;
+package com.github.rinde.gpem17.evo;
 
 import java.io.Serializable;
 
+import com.github.rinde.gpem17.AuctionStats;
 import com.github.rinde.rinsim.pdptw.common.StatisticsDTO;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Optional;

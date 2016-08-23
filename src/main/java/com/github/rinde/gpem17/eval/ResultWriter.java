@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.rinde.gpem17;
+package com.github.rinde.gpem17.eval;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -24,6 +24,7 @@ import java.util.Collection;
 
 import org.joda.time.format.ISODateTimeFormat;
 
+import com.github.rinde.gpem17.AuctionStats;
 import com.github.rinde.rinsim.core.model.time.RealtimeTickInfo;
 import com.github.rinde.rinsim.experiment.Experiment.SimArgs;
 import com.github.rinde.rinsim.experiment.Experiment.SimulationResult;

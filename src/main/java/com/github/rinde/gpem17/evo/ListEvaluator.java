@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.rinde.gpem17;
+package com.github.rinde.gpem17.evo;
 
 import java.io.Serializable;
 import java.nio.file.Paths;
@@ -31,6 +31,8 @@ import com.github.rinde.ecj.GPProgram;
 import com.github.rinde.ecj.GPProgramParser;
 import com.github.rinde.evo4mas.common.PriorityHeuristicSolver;
 import com.github.rinde.evo4mas.common.VehicleParcelContext;
+import com.github.rinde.gpem17.AuctionStats;
+import com.github.rinde.gpem17.GPEM17;
 import com.github.rinde.logistics.pdptw.mas.TruckFactory.DefaultTruckFactory;
 import com.github.rinde.logistics.pdptw.mas.comm.AuctionCommModel;
 import com.github.rinde.logistics.pdptw.mas.comm.AuctionPanel;
@@ -61,7 +63,6 @@ import com.github.rinde.rinsim.pdptw.common.TimeLinePanel;
 import com.github.rinde.rinsim.scenario.Scenario;
 import com.github.rinde.rinsim.scenario.ScenarioIO;
 import com.github.rinde.rinsim.scenario.StopConditions;
-import com.github.rinde.rinsim.scenario.gendreau06.Gendreau06ObjectiveFunction;
 import com.github.rinde.rinsim.ui.View;
 import com.github.rinde.rinsim.ui.renderers.PDPModelRenderer;
 import com.github.rinde.rinsim.ui.renderers.PlaneRoadModelRenderer;
@@ -77,9 +78,6 @@ import ec.EvolutionState;
  * @author Rinde van Lon
  */
 public class ListEvaluator extends BaseEvaluator {
-
-  static final Gendreau06ObjectiveFunction OBJ_FUNC =
-    Gendreau06ObjectiveFunction.instance(50d);
 
   @Override
   public void evaluatePopulation(EvolutionState state) {
@@ -121,7 +119,7 @@ public class ListEvaluator extends BaseEvaluator {
 
     for (SimulationResult sr : results.getResults()) {
       StatisticsDTO stats = ((ResultObject) sr.getResultObject()).getStats();
-      double cost = OBJ_FUNC.computeCost(stats);
+      double cost = GPEM17.OBJ_FUNC.computeCost(stats);
       float fitness = (float) cost;
       if (!stats.simFinish) {
         fitness = Float.MAX_VALUE;
@@ -146,9 +144,10 @@ public class ListEvaluator extends BaseEvaluator {
       .addEventHandler(AddVehicleEvent.class,
         DefaultTruckFactory.builder()
           .setRoutePlanner(RtSolverRoutePlanner.simulatedTimeSupplier(solver))
-          .setCommunicator(RtSolverBidder.simulatedTimeBuilder(OBJ_FUNC, solver)
-            .withBidFunction(bf)
-            .withReauctionCooldownPeriod(60000))
+          .setCommunicator(
+            RtSolverBidder.simulatedTimeBuilder(GPEM17.OBJ_FUNC, solver)
+              .withBidFunction(bf)
+              .withReauctionCooldownPeriod(60000))
           .setLazyComputation(false)
           .setRouteAdjuster(RouteFollowingVehicle.delayAdjuster())
           .build())
@@ -202,7 +201,7 @@ public class ListEvaluator extends BaseEvaluator {
             .of(AuctionStats.create(parcels, reauctions, unsuccessful, failed));
         }
         final StatisticsDTO stats =
-          PostProcessors.statisticsPostProcessor(OBJ_FUNC)
+          PostProcessors.statisticsPostProcessor(GPEM17.OBJ_FUNC)
             .collectResults(sim, args);
         return ResultObject.create(stats, aStats);
       }

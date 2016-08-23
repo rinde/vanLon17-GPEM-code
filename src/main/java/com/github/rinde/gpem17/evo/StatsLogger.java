@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.rinde.gpem17;
+package com.github.rinde.gpem17.evo;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -29,6 +29,8 @@ import org.joda.time.format.ISODateTimeFormat;
 
 import com.github.rinde.ecj.GPComputationResult;
 import com.github.rinde.ecj.GPStats;
+import com.github.rinde.gpem17.AuctionStats;
+import com.github.rinde.gpem17.GPEM17;
 import com.github.rinde.rinsim.experiment.Experiment.SimulationResult;
 import com.github.rinde.rinsim.pdptw.common.StatisticsDTO;
 import com.google.common.base.Charsets;
@@ -86,17 +88,17 @@ public class StatsLogger extends GPStats {
       final String pc = sr.getSimArgs().getScenario().getProblemClass().getId();
       final String id = sr.getSimArgs().getScenario().getProblemInstanceId();
       final String scenarioName = DASH_JOINER.join(pc, id);
-      boolean isValid = ListEvaluator.OBJ_FUNC.isValidResult(stats);
-      double cost = ListEvaluator.OBJ_FUNC.computeCost(stats);
+      boolean isValid = GPEM17.OBJ_FUNC.isValidResult(stats);
+      double cost = GPEM17.OBJ_FUNC.computeCost(stats);
       final ImmutableMap.Builder<Enum<?>, Object> map =
         ImmutableMap.<Enum<?>, Object>builder()
           .put(CsvFields.GENERATION, generationId)
           .put(CsvFields.SCENARIO_ID, scenarioName)
           .put(CsvFields.RANDOM_SEED, sr.getSimArgs().getRandomSeed())
           .put(CsvFields.COST, cost)
-          .put(CsvFields.TRAVEL_TIME, ListEvaluator.OBJ_FUNC.travelTime(stats))
-          .put(CsvFields.TARDINESS, ListEvaluator.OBJ_FUNC.tardiness(stats))
-          .put(CsvFields.OVER_TIME, ListEvaluator.OBJ_FUNC.overTime(stats))
+          .put(CsvFields.TRAVEL_TIME, GPEM17.OBJ_FUNC.travelTime(stats))
+          .put(CsvFields.TARDINESS, GPEM17.OBJ_FUNC.tardiness(stats))
+          .put(CsvFields.OVER_TIME, GPEM17.OBJ_FUNC.overTime(stats))
           .put(CsvFields.IS_VALID, isValid)
           .put(CsvFields.NUM_ORDERS, stats.totalParcels)
           .put(CsvFields.NUM_VEHICLES, stats.totalVehicles)

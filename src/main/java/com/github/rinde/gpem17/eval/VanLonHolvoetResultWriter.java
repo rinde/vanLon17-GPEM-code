@@ -13,10 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.rinde.gpem17;
+package com.github.rinde.gpem17.eval;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -61,7 +64,7 @@ public class VanLonHolvoetResultWriter extends ResultWriter {
     try {
       final String scenarioName = Joiner.on("-").join(pc, id);
       final List<String> propsStrings = Files.readLines(new File(
-        RtEvaluation.DATASET_PATH + scenarioName
+        Evaluation.DATASET_PATH + scenarioName
           + ".properties"),
         Charsets.UTF_8);
       final Map<String, String> properties = Splitter.on("\n")
@@ -81,10 +84,10 @@ public class VanLonHolvoetResultWriter extends ResultWriter {
 
       addSimOutputs(map, sr, objectiveFunction);
 
-      final String line = MeasureGendreau
-        .appendValuesTo(new StringBuilder(), map.build(), getFields())
-        .append(System.lineSeparator())
-        .toString();
+      final String line =
+        appendValuesTo(new StringBuilder(), map.build(), getFields())
+          .append(System.lineSeparator())
+          .toString();
       Files.append(line, destFile, Charsets.UTF_8);
     } catch (final IOException e) {
       throw new IllegalStateException(e);
@@ -96,4 +99,14 @@ public class VanLonHolvoetResultWriter extends ResultWriter {
     return ImmutableList.<Enum<?>>copyOf(OutputFields.values());
   }
 
+  static <T extends Enum<?>> StringBuilder appendValuesTo(StringBuilder sb,
+      Map<T, Object> props, Iterable<T> keys) {
+    final List<Object> values = new ArrayList<>();
+    for (final T p : keys) {
+      checkArgument(props.containsKey(p));
+      values.add(props.get(p));
+    }
+    Joiner.on(",").appendTo(sb, values);
+    return sb;
+  }
 }
