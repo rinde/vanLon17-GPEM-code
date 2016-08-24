@@ -38,9 +38,12 @@ import com.google.common.io.Files;
  */
 public class VanLonHolvoetResultWriter extends ResultWriter {
 
+  final String dataset;
+
   public VanLonHolvoetResultWriter(File target,
-      Gendreau06ObjectiveFunction objFunc) {
-    super(target, objFunc);
+      Gendreau06ObjectiveFunction objFunc, String datasetPath, boolean rt) {
+    super(target, objFunc, rt);
+    dataset = datasetPath;
   }
 
   @Override
@@ -53,7 +56,9 @@ public class VanLonHolvoetResultWriter extends ResultWriter {
     }
     appendSimResult(result, targetFile);
 
-    writeTimeLog(result);
+    if (realtime) {
+      writeTimeLog(result);
+    }
   }
 
   @Override
@@ -64,8 +69,7 @@ public class VanLonHolvoetResultWriter extends ResultWriter {
     try {
       final String scenarioName = Joiner.on("-").join(pc, id);
       final List<String> propsStrings = Files.readLines(new File(
-        Evaluate.DATASET_PATH + scenarioName
-          + ".properties"),
+        dataset + "/" + scenarioName + ".properties"),
         Charsets.UTF_8);
       final Map<String, String> properties = Splitter.on("\n")
         .withKeyValueSeparator(" = ")

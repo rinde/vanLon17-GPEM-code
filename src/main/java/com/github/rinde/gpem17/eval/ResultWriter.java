@@ -47,12 +47,19 @@ abstract class ResultWriter implements ResultListener {
   final File experimentDirectory;
   final File timeDeviationsDirectory;
   final Gendreau06ObjectiveFunction objectiveFunction;
+  final boolean realtime;
 
-  ResultWriter(File target, Gendreau06ObjectiveFunction objFunc) {
+  ResultWriter(File target, Gendreau06ObjectiveFunction objFunc, boolean rt) {
     experimentDirectory = createExperimentDir(target);
     objectiveFunction = objFunc;
-    timeDeviationsDirectory = new File(experimentDirectory, "time-deviations");
-    timeDeviationsDirectory.mkdirs();
+    realtime = rt;
+    if (rt) {
+      timeDeviationsDirectory =
+        new File(experimentDirectory, "time-deviations");
+      timeDeviationsDirectory.mkdirs();
+    } else {
+      timeDeviationsDirectory = null;
+    }
   }
 
   public File getExperimentDirectory() {
@@ -221,10 +228,10 @@ abstract class ResultWriter implements ResultListener {
           .put(OutputFields.NUM_FAILED_REAUCTIONS, 0);
       }
 
-      if (!objFunc.isValidResult(stats)) {
-        System.err.println("WARNING: FOUND AN INVALID RESULT: ");
-        System.err.println(map.build());
-      }
+      // if (!objFunc.isValidResult(stats)) {
+      // System.err.println("WARNING: FOUND AN INVALID RESULT: ");
+      // System.err.println(map.build());
+      // }
     }
   }
 

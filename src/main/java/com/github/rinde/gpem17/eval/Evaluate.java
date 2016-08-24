@@ -116,7 +116,9 @@ public class Evaluate {
     checkArgument(realtime ^ scenarioConverter != null);
     final long startTime = System.currentTimeMillis();
 
-    ResultWriter rw = new VanLonHolvoetResultWriter(resDir, GPEM17.OBJ_FUNC);
+    ResultWriter rw = new VanLonHolvoetResultWriter(resDir, GPEM17.OBJ_FUNC,
+      scenarioFiles.build().get().iterator().next().getParent().toString(),
+      realtime);
     Experiment.Builder exp = Experiment.builder()
       .addScenarios(scenarioFiles)
       .showGui(GPEM17.gui())
@@ -133,18 +135,20 @@ public class Evaluate {
         SimulationProperty.REPS,
         SimulationProperty.SCENARIO,
         SimulationProperty.CONFIG)
-      .addResultListener(new CommandLineProgress(System.out))
+
       .addResultListener(rw);
 
     if (realtime) {
       exp.setScenarioReader(
         ScenarioIO.readerAdapter(ScenarioConverter.TO_ONLINE_REALTIME_250))
         .withWarmup(30000)
+        .addResultListener(new CommandLineProgress(System.out))
         .withThreads((int) Math
           .floor((Runtime.getRuntime().availableProcessors() - 1) / 2d));
     } else if (scenarioConverter == null) {
       exp.setScenarioReader(
-        ScenarioIO.readerAdapter(ScenarioConverter.TO_ONLINE_SIMULATED_250));
+        ScenarioIO.readerAdapter(ScenarioConverter.TO_ONLINE_SIMULATED_250))
+        .addResultListener(new CommandLineProgress(System.out));
     } else {
       exp.setScenarioReader(
         ScenarioIO.readerAdapter(scenarioConverter));
