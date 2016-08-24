@@ -16,8 +16,9 @@
 package com.github.rinde.gpem17.evo;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Verify.verify;
 
-import java.io.Serializable;
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -29,33 +30,24 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.annotation.Nullable;
-
 import com.github.rinde.ecj.BaseEvaluator;
 import com.github.rinde.ecj.GPBaseNode;
 import com.github.rinde.ecj.GPComputationResult;
 import com.github.rinde.ecj.GPProgram;
 import com.github.rinde.ecj.GPProgramParser;
 import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.GpGlobal;
-import com.github.rinde.gpem17.AuctionStats;
 import com.github.rinde.gpem17.GPEM17;
-import com.github.rinde.logistics.pdptw.mas.comm.AuctionCommModel;
-import com.github.rinde.rinsim.core.Simulator;
+import com.github.rinde.gpem17.eval.Evaluate;
+import com.github.rinde.gpem17.eval.RtExperimentInfo;
 import com.github.rinde.rinsim.core.model.time.TimeModel;
-import com.github.rinde.rinsim.experiment.Experiment;
-import com.github.rinde.rinsim.experiment.Experiment.SimArgs;
 import com.github.rinde.rinsim.experiment.Experiment.SimulationResult;
 import com.github.rinde.rinsim.experiment.ExperimentResults;
 import com.github.rinde.rinsim.experiment.MASConfiguration;
-import com.github.rinde.rinsim.experiment.PostProcessor;
 import com.github.rinde.rinsim.io.FileProvider;
 import com.github.rinde.rinsim.pdptw.common.StatisticsDTO;
-import com.github.rinde.rinsim.pdptw.common.StatsTracker;
 import com.github.rinde.rinsim.scenario.Scenario;
-import com.github.rinde.rinsim.scenario.ScenarioIO;
 import com.github.rinde.rinsim.scenario.StopConditions;
 import com.google.common.base.Function;
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.SetMultimap;
 
@@ -128,46 +120,54 @@ public class FitnessEvaluator extends BaseEvaluator {
 
     System.out.println(paths.subList(fromIndex, toIndex));
 
-    Experiment.Builder expBuilder = Experiment.builder()
-      .addScenarios(
-        FileProvider.builder().add(paths.subList(fromIndex, toIndex)))
-      .setScenarioReader(
-        ScenarioIO.readerAdapter(Converter.INSTANCE))
-      .showGui(GPEM17.gui())
-      .showGui(false)
-      .withRandomSeed(state.random[0].nextLong())
-      .usePostProcessor(AuctionPostProcessor.INSTANCE);
-
+    String[] args;
     if (distributed) {
-      expBuilder.computeDistributed();
+      args = new String[] {"--jppf", "--repetitions", "1"};
+    } else {
+      args = new String[] {"--repetitions", "1"};
     }
 
-    Map<MASConfiguration, GPNodeHolder> configGpMapping = new LinkedHashMap<>();
-    for (GPNodeHolder node : mapping.keySet()) {
+    File generationDir =
+      new File(((StatsLogger) state.statistics).experimentDirectory,
+        "generation" + state.generation);
 
-      // GPProgram<GpGlobal> prog =
-      // GPProgramParser.parseProgramFunc("(insertioncost)",
-      // (new FunctionSet()).create());
+    List<GPProgram<GpGlobal>> programs = new ArrayList<>();
+    List<GPNodeHolder> nodes = ImmutableList.copyOf(mapping.keySet());
+    for (GPNodeHolder node : nodes) {
 
       final GPProgram<GpGlobal> prog = GPProgramParser
         .convertToGPProgram((GPBaseNode<GpGlobal>) node.trees[0].child);
+      programs.add(prog);
 
-      MASConfiguration config = GPEM17.createStConfig(prog, prog.getId());
-      configGpMapping.put(config, node);
-      expBuilder.addConfiguration(config);
     }
 
-    ExperimentResults results = expBuilder.perform();
-    List<GPComputationResult> convertedResults = new ArrayList<>();
+    ExperimentResults results = Evaluate.execute(
+      programs,
+      false,
+      FileProvider.builder().add(paths.subList(fromIndex, toIndex)),
+      generationDir,
+      Converter.INSTANCE,
+      args);
 
+    Map<MASConfiguration, GPNodeHolder> configMapping = new LinkedHashMap<>();
+    ImmutableList<MASConfiguration> configs =
+      results.getConfigurations().asList();
+
+    verify(configs.size() == nodes.size());
+    for (int i = 0; i < configs.size(); i++) {
+      configMapping.put(configs.get(i), nodes.get(i));
+    }
+
+    List<GPComputationResult> convertedResults = new ArrayList<>();
     for (SimulationResult sr : results.getResults()) {
-      StatisticsDTO stats = ((ResultObject) sr.getResultObject()).getStats();
+      StatisticsDTO stats =
+        ((RtExperimentInfo) sr.getResultObject()).getStats();
       double cost = GPEM17.OBJ_FUNC.computeCost(stats);
       float fitness = (float) cost;
       if (!GPEM17.OBJ_FUNC.isValidResult(stats)) {
         fitness = Float.MAX_VALUE;
       }
-      String id = configGpMapping.get(sr.getSimArgs().getMasConfig()).string;
+      String id = configMapping.get(sr.getSimArgs().getMasConfig()).string;
       convertedResults.add(SingleResult.create((float) fitness, id, sr));
     }
 
@@ -190,40 +190,6 @@ public class FitnessEvaluator extends BaseEvaluator {
             StopConditions.limitedTime(MAX_SIM_TIME),
             EvoStopCondition.INSTANCE))
           .build();
-      }
-    }
-  }
-
-  enum AuctionPostProcessor
-    implements PostProcessor<ResultObject>,Serializable {
-    INSTANCE {
-      @Override
-      public ResultObject collectResults(Simulator sim, SimArgs args) {
-        @Nullable
-        final AuctionCommModel<?> auctionModel =
-          sim.getModelProvider().tryGetModel(AuctionCommModel.class);
-
-        final Optional<AuctionStats> aStats;
-        if (auctionModel == null) {
-          aStats = Optional.absent();
-        } else {
-          final int parcels = auctionModel.getNumParcels();
-          final int reauctions = auctionModel.getNumAuctions() - parcels;
-          final int unsuccessful = auctionModel.getNumUnsuccesfulAuctions();
-          final int failed = auctionModel.getNumFailedAuctions();
-          aStats = Optional
-            .of(AuctionStats.create(parcels, reauctions, unsuccessful, failed));
-        }
-
-        final StatisticsDTO stats =
-          sim.getModelProvider().getModel(StatsTracker.class).getStatistics();
-        return ResultObject.create(stats, aStats);
-      }
-
-      @Override
-      public FailureStrategy handleFailure(Exception e, Simulator sim,
-          SimArgs args) {
-        return FailureStrategy.ABORT_EXPERIMENT_RUN;
       }
     }
   }

@@ -12,7 +12,7 @@ import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 
 @AutoValue
-abstract class RtExperimentInfo implements Serializable {
+public abstract class RtExperimentInfo implements Serializable {
   private static final long serialVersionUID = 6324066851233398736L;
 
   RtExperimentInfo() {}
@@ -23,11 +23,11 @@ abstract class RtExperimentInfo implements Serializable {
 
   abstract long getStCount();
 
-  abstract StatisticsDTO getStats();
+  public abstract StatisticsDTO getStats();
 
   abstract ImmutableList<RealtimeTickInfo> getTickInfoList();
 
-  abstract Optional<AuctionStats> getAuctionStats();
+  public abstract Optional<AuctionStats> getAuctionStats();
 
   static RtExperimentInfo create(List<LogEntry> log, long rt, long st,
       StatisticsDTO stats, ImmutableList<RealtimeTickInfo> dev,

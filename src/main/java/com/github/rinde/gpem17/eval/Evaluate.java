@@ -40,6 +40,7 @@ import com.github.rinde.rinsim.core.model.time.TimeModel;
 import com.github.rinde.rinsim.experiment.CommandLineProgress;
 import com.github.rinde.rinsim.experiment.Experiment;
 import com.github.rinde.rinsim.experiment.ExperimentResults;
+import com.github.rinde.rinsim.experiment.PostProcessor.FailureStrategy;
 import com.github.rinde.rinsim.experiment.SimulationProperty;
 import com.github.rinde.rinsim.io.FileProvider;
 import com.github.rinde.rinsim.scenario.Scenario;
@@ -60,7 +61,6 @@ public class Evaluate {
   static final String ST_RESULTS_DIR = "files/results/simtime/";
 
   public static void main(String[] args) {
-    final long startTime = System.currentTimeMillis();
     System.out.println(System.getProperty("java.vm.name") + ", "
       + System.getProperty("java.vm.vendor") + ", "
       + System.getProperty("java.vm.version") + " (runtime version: "
@@ -95,23 +95,41 @@ public class Evaluate {
 
     final String[] expArgs = new String[args.length - 2];
     System.arraycopy(args, 2, expArgs, 0, args.length - 2);
-
     File resDir =
       realtime ? new File(RT_RESULTS_DIR) : new File(ST_RESULTS_DIR);
 
+    FileProvider.Builder files = FileProvider.builder()
+      .add(Paths.get(DATASET_PATH))
+      .filter("regex:.*\\.scen");
+
+    execute(programs, realtime, files, resDir, null, expArgs);
+
+  }
+
+  public static ExperimentResults execute(
+      Iterable<GPProgram<GpGlobal>> programs,
+      boolean realtime,
+      FileProvider.Builder scenarioFiles,
+      File resDir,
+      @Nullable Function<Scenario, Scenario> scenarioConverter,
+      String... expArgs) {
+    checkArgument(realtime ^ scenarioConverter != null);
+    final long startTime = System.currentTimeMillis();
+
     ResultWriter rw = new VanLonHolvoetResultWriter(resDir, GPEM17.OBJ_FUNC);
     Experiment.Builder exp = Experiment.builder()
-      .addScenarios(FileProvider.builder()
-        .add(Paths.get(DATASET_PATH))
-        .filter("regex:.*\\.scen"))
+      .addScenarios(scenarioFiles)
       .showGui(GPEM17.gui())
       .showGui(false)
-      .usePostProcessor(new LogProcessor(GPEM17.OBJ_FUNC))
+      .usePostProcessor(
+        new LogProcessor(GPEM17.OBJ_FUNC, scenarioConverter == null
+          ? FailureStrategy.RETRY : FailureStrategy.INCLUDE, false))
       .computeLocal()
       .withRandomSeed(123)
       .repeat(3)
       // SEED_REPS,REPS,SCENARIO,CONFIG
-      .withOrdering(SimulationProperty.SEED_REPS,
+      .withOrdering(
+        SimulationProperty.SEED_REPS,
         SimulationProperty.REPS,
         SimulationProperty.SCENARIO,
         SimulationProperty.CONFIG)
@@ -124,9 +142,12 @@ public class Evaluate {
         .withWarmup(30000)
         .withThreads((int) Math
           .floor((Runtime.getRuntime().availableProcessors() - 1) / 2d));
-    } else {
+    } else if (scenarioConverter == null) {
       exp.setScenarioReader(
         ScenarioIO.readerAdapter(ScenarioConverter.TO_ONLINE_SIMULATED_250));
+    } else {
+      exp.setScenarioReader(
+        ScenarioIO.readerAdapter(scenarioConverter));
     }
 
     int counter = 0;
@@ -156,13 +177,14 @@ public class Evaluate {
       exp.perform(System.out, expArgs);
     final long duration = System.currentTimeMillis() - startTime;
     if (!results.isPresent()) {
-      return;
+      return null;
     }
 
     final Duration dur = new Duration(startTime, System.currentTimeMillis());
     System.out.println("Done, computed " + results.get().getResults().size()
       + " simulations in " + duration / 1000d + "s ("
       + PeriodFormat.getDefault().print(dur.toPeriod()) + ")");
+    return results.get();
   }
 
   enum ScenarioConverter implements Function<Scenario, Scenario> {
