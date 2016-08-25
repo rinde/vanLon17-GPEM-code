@@ -25,7 +25,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.joda.time.Duration;
 import org.joda.time.format.ISODateTimeFormat;
+import org.joda.time.format.PeriodFormat;
 
 import com.github.rinde.ecj.GPComputationResult;
 import com.github.rinde.ecj.GPStats;
@@ -53,10 +55,12 @@ public class StatsLogger extends GPStats {
   static final Joiner COMMA_JOINER = Joiner.on(",");
   final File experimentDirectory;
   final File statsLog;
+  final long startTime;
 
   public StatsLogger() {
     experimentDirectory = createExperimentDir(new File(RESULTS_MAIN_DIR));
     statsLog = new File(experimentDirectory, "best-stats.csv");
+    startTime = System.nanoTime();
 
     // create best-stats.csv with header
     createHeader(statsLog);
@@ -164,6 +168,14 @@ public class StatsLogger extends GPStats {
 
   public void finalStatistics(final EvolutionState state, final int result) {
     super.finalStatistics(state, result);
+
+    // convert to ms duration
+    final Duration dur =
+      new Duration(startTime, System.nanoTime()).dividedBy(1000000L);
+
+    System.out.println("End of evolutionary run.");
+    System.out.println(
+      "Total runtime: " + PeriodFormat.getDefault().print(dur.toPeriod()));
   }
 
   static File createExperimentDir(File target) {
