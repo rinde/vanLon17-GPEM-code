@@ -32,7 +32,6 @@ import com.github.rinde.rinsim.central.rt.RtSolverModel;
 import com.github.rinde.rinsim.central.rt.RtStAdapters;
 import com.github.rinde.rinsim.core.model.time.RealtimeClockLogger;
 import com.github.rinde.rinsim.experiment.MASConfiguration;
-import com.github.rinde.rinsim.experiment.MASConfiguration.Builder;
 import com.github.rinde.rinsim.pdptw.common.AddVehicleEvent;
 import com.github.rinde.rinsim.pdptw.common.RouteFollowingVehicle;
 import com.github.rinde.rinsim.pdptw.common.RoutePanel;
@@ -69,22 +68,8 @@ public class GPEM17 {
       .with(TimeLinePanel.builder());
   }
 
-  public static MASConfiguration createRtConfig(PriorityHeuristic<GpGlobal> solver,
-      String id) {
-    StochasticSupplier<RoutePlanner> rp =
-      RtSolverRoutePlanner.supplier(
-        RtStAdapters
-          .toRealtime(CheapestInsertionHeuristic.supplier(OBJ_FUNC)));
-  
-    StochasticSupplier<? extends Communicator> cm =
-      EvoBidder.realtimeBuilder(solver, OBJ_FUNC)
-        .withReauctionCooldownPeriod(60000);
-  
-    String name = "ReAuction-RP-EVO-BID-EVO-" + id;
-    return GPEM17.createConfig(solver, rp, cm, true, name);
-  }
-
-  public static MASConfiguration createConfig(PriorityHeuristic<GpGlobal> solver,
+  public static MASConfiguration createConfig(
+      PriorityHeuristic<GpGlobal> solver,
       StochasticSupplier<? extends RoutePlanner> rp,
       StochasticSupplier<? extends Communicator> cm,
       boolean rt,
@@ -106,7 +91,7 @@ public class GPEM17 {
               AuctionStopConditions.<DoubleBid>allBidders(),
               AuctionStopConditions.<DoubleBid>maxAuctionDuration(5000))))
         .withMaxAuctionDuration(30 * 60 * 1000L));
-  
+
     if (rt) {
       builder
         .addModel(RtSolverModel.builder()
@@ -120,18 +105,37 @@ public class GPEM17 {
     return builder.build();
   }
 
-  public static MASConfiguration createStConfig(PriorityHeuristic<GpGlobal> solver,
+  public static MASConfiguration createRtConfig(
+      PriorityHeuristic<GpGlobal> solver,
+      String id) {
+    StochasticSupplier<RoutePlanner> rp =
+      RtSolverRoutePlanner.supplier(
+        RtStAdapters
+          .toRealtime(CheapestInsertionHeuristic.supplier(OBJ_FUNC)));
+
+    StochasticSupplier<? extends Communicator> cm =
+      EvoBidder.realtimeBuilder(solver, OBJ_FUNC)
+        .withReauctionCooldownPeriod(60000)
+        .withPriorityHeuristicForReauction();
+
+    String name = "ReAuction-RP-EVO-BID-EVO-" + id;
+    return GPEM17.createConfig(solver, rp, cm, true, name);
+  }
+
+  public static MASConfiguration createStConfig(
+      PriorityHeuristic<GpGlobal> solver,
       String id) {
     StochasticSupplier<RoutePlanner> rp =
       RtSolverRoutePlanner.simulatedTimeSupplier(
         CheapestInsertionHeuristic.supplier(OBJ_FUNC));
-  
+
     StochasticSupplier<? extends Communicator> cm =
       EvoBidder.simulatedTimeBuilder(solver, OBJ_FUNC)
-        .withReauctionCooldownPeriod(60000);
-  
+        .withReauctionCooldownPeriod(60000)
+        .withPriorityHeuristicForReauction();
+
     String name = "ReAuction-RP-EVO-BID-EVO-" + id;
-  
+
     return createConfig(solver, rp, cm, false, name);
   }
 
