@@ -15,14 +15,10 @@
  */
 package com.github.rinde.gpem17.eval;
 
-import static com.google.common.base.Preconditions.checkState;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Collection;
-
-import org.joda.time.format.ISODateTimeFormat;
 
 import com.github.rinde.gpem17.AuctionStats;
 import com.github.rinde.rinsim.core.model.time.RealtimeTickInfo;
@@ -50,7 +46,7 @@ abstract class ResultWriter implements ResultListener {
   final boolean realtime;
 
   ResultWriter(File target, Gendreau06ObjectiveFunction objFunc, boolean rt) {
-    experimentDirectory = createExperimentDir(target);
+    experimentDirectory = target;
     objectiveFunction = objFunc;
     realtime = rt;
     if (rt) {
@@ -272,26 +268,6 @@ abstract class ResultWriter implements ResultListener {
     } catch (final IOException e) {
       throw new IllegalStateException(e);
     }
-  }
-
-  static File createExperimentDir(File target) {
-    final String timestamp = ISODateTimeFormat.dateHourMinuteSecond()
-      .print(System.currentTimeMillis());
-    final File experimentDirectory = new File(target, timestamp);
-    experimentDirectory.mkdirs();
-
-    final File latest = new File(target, "latest/");
-    if (latest.exists()) {
-      checkState(latest.delete());
-    }
-    try {
-      java.nio.file.Files.createSymbolicLink(
-        latest.toPath(),
-        experimentDirectory.getAbsoluteFile().toPath());
-    } catch (final IOException e) {
-      throw new IllegalStateException(e);
-    }
-    return experimentDirectory;
   }
 
   enum OutputFields {

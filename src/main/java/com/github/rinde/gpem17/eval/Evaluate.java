@@ -16,6 +16,7 @@
 package com.github.rinde.gpem17.eval;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.base.Verify.verifyNotNull;
 
 import java.io.File;
@@ -28,6 +29,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 import org.joda.time.Duration;
+import org.joda.time.format.ISODateTimeFormat;
 import org.joda.time.format.PeriodFormat;
 
 import com.github.rinde.ecj.GPFunc;
@@ -104,7 +106,7 @@ public class Evaluate {
 
     Function<Scenario, Scenario> conv =
       realtime ? null : ScenarioConverter.TO_ONLINE_SIMULATED_250;
-    execute(programs, realtime, files, resDir, conv, expArgs);
+    execute(programs, realtime, files, resDir, true, conv, expArgs);
 
   }
 
@@ -113,10 +115,17 @@ public class Evaluate {
       boolean realtime,
       FileProvider.Builder scenarioFiles,
       File resDir,
+      boolean createTimeStampedResDir,
       @Nullable Function<Scenario, Scenario> scenarioConverter,
       String... expArgs) {
     checkArgument(realtime ^ scenarioConverter != null);
     final long startTime = System.currentTimeMillis();
+
+    if (createTimeStampedResDir) {
+      resDir = createExperimentDir(resDir);
+    } else {
+      resDir.mkdirs();
+    }
 
     ResultWriter rw = new VanLonHolvoetResultWriter(resDir, GPEM17.OBJ_FUNC,
       scenarioFiles.build().get().iterator().next().getParent().toString(),
@@ -138,7 +147,8 @@ public class Evaluate {
         SimulationProperty.SCENARIO,
         SimulationProperty.CONFIG)
 
-      .addResultListener(rw);
+      .addResultListener(rw)
+      .addResultListener(new SimRuntimeLogger(resDir));
 
     if (realtime) {
       exp.setScenarioReader(
@@ -191,6 +201,26 @@ public class Evaluate {
       + " simulations in " + duration / 1000d + "s ("
       + PeriodFormat.getDefault().print(dur.toPeriod()) + ")");
     return results.get();
+  }
+
+  static File createExperimentDir(File target) {
+    final String timestamp = ISODateTimeFormat.dateHourMinuteSecond()
+      .print(System.currentTimeMillis());
+    final File experimentDirectory = new File(target, timestamp);
+    experimentDirectory.mkdirs();
+
+    final File latest = new File(target, "latest/");
+    if (latest.exists()) {
+      checkState(latest.delete());
+    }
+    try {
+      java.nio.file.Files.createSymbolicLink(
+        latest.toPath(),
+        experimentDirectory.getAbsoluteFile().toPath());
+    } catch (final IOException e) {
+      throw new IllegalStateException(e);
+    }
+    return experimentDirectory;
   }
 
   enum ScenarioConverter implements Function<Scenario, Scenario> {

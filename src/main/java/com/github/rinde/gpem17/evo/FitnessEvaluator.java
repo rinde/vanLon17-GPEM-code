@@ -146,6 +146,7 @@ public class FitnessEvaluator extends BaseEvaluator {
       false,
       FileProvider.builder().add(paths.subList(fromIndex, toIndex)),
       generationDir,
+      false,
       Converter.INSTANCE,
       args);
 
