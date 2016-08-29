@@ -59,23 +59,29 @@ enum EvoStopCondition implements StopCondition {
 
         checkState(vehicles.size() == stats.totalVehicles);
 
+        int routeSizeLimit = (int) Math.ceil(.5 * ((stats.totalParcels * 2d)));
         int numNonEmptyRoutes = 0;
         for (RouteFollowingVehicle v : vehicles) {
           if (!v.getRoute().isEmpty()) {
             numNonEmptyRoutes++;
+
+            if (stats.totalParcels > 20
+              && v.getRoute().size() > routeSizeLimit) {
+              return true;
+            }
           }
         }
 
         // only one vehicle has a route and only one has moved
-        if (numNonEmptyRoutes == 1
-          && stats.movedVehicles == 1
-          && stats.totalParcels > PARCEL_THRESHOLD) {
-          return true;
-        }
-
-        if (time > MAX_TIME && stats.totalParcels > PARCEL_THRESHOLD) {
-          return stats.movedVehicles <= stats.totalVehicles / 2;
-        }
+        // if (numNonEmptyRoutes == 1
+        // && stats.movedVehicles == 1
+        // && stats.totalParcels > PARCEL_THRESHOLD) {
+        // return true;
+        // }
+        //
+        // if (time > MAX_TIME && stats.totalParcels > PARCEL_THRESHOLD) {
+        // return stats.movedVehicles <= stats.totalVehicles / 2;
+        // }
 
       }
       return false;
