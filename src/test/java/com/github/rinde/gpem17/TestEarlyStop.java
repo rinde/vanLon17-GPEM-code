@@ -48,11 +48,19 @@ public class TestEarlyStop {
     String prog2 =
       "(/ (neg (x (- 2.0 1.0) (neg insertiontardiness))) (min (x (/ insertiontardiness insertionovertime) (+ timeleft time)) (+ (- 10.0 insertionovertime) (min 1.0 insertionflexibility))))";
 
+    String prog3 =
+      "(/ (if4 (min (x 2.0 insertiontraveltime) (max insertioncost insertionovertime)) (x (neg time) (pow time 0.0)) (+ (x 1.0 0.0) (min 0.0 10.0)) (/ (neg 0.0) (neg insertionovertime))) (/ (pow (neg 2.0) (if4 insertioncost timeleft 10.0 slack)) (pow (pow 10.0 insertiontardiness) (if4 0.0 slack 10.0 slack))))";
+
+    String prog4 =
+      "(max (neg (pow (neg (max 0.0 insertionovertime)) (if4 (x insertionflexibility time) (max 10.0 insertioncost) (+ 2.0 insertionovertime) (if4 timeleft 0.0 timeleft 10.0)))) (neg (max (min (if4 1.0 10.0 10.0 0.0) (/ time 0.0)) (min (- insertionflexibility 10.0) (/ insertionflexibility 0.0)))))";
+
+    String prog5 =
+      "(+ (x (if4 (if4 time 2.0 timeleft 10.0) (pow slack 2.0) (if4 insertioncost insertioncost slack 2.0) (/ insertionovertime time)) (- (x insertionflexibility insertiontardiness) (- insertionovertime slack))) (min (max (+ timeleft 10.0) (if4 0.0 insertiontardiness 10.0 time)) (/ (pow timeleft insertiontardiness) (+ 1.0 2.0))))";
     Collection<GPFunc<GpGlobal>> funcs = new FunctionSet().create();
 
     List<GPProgram<GpGlobal>> progs = new ArrayList<>();
-    for (String p : asList(prog, prog2)) {
-      progs.add(GPProgramParser.parseProgramFunc(prog, funcs));
+    for (String p : asList(prog5, prog4, prog, prog2, prog3)) {
+      progs.add(GPProgramParser.parseProgramFunc(p, funcs));
     }
 
     FileProvider.Builder files = FileProvider.builder()

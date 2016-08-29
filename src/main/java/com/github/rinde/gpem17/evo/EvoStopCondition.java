@@ -59,11 +59,12 @@ enum EvoStopCondition implements StopCondition {
 
         checkState(vehicles.size() == stats.totalVehicles);
 
-        int routeSizeLimit = (int) Math.ceil(.5 * ((stats.totalParcels * 2d)));
-        int numNonEmptyRoutes = 0;
+        int routeSizeLimit = (int) Math
+          .ceil(.5 * (((stats.totalParcels - stats.totalDeliveries) * 2d)));
+        // int numNonEmptyRoutes = 0;
         for (RouteFollowingVehicle v : vehicles) {
           if (!v.getRoute().isEmpty()) {
-            numNonEmptyRoutes++;
+            // numNonEmptyRoutes++;
 
             if (stats.totalParcels > 20
               && v.getRoute().size() > routeSizeLimit) {
