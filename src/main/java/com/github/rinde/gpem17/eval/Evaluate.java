@@ -102,7 +102,9 @@ public class Evaluate {
       .add(Paths.get(DATASET_PATH))
       .filter("regex:.*\\.scen");
 
-    execute(programs, realtime, files, resDir, null, expArgs);
+    Function<Scenario, Scenario> conv =
+      realtime ? null : ScenarioConverter.TO_ONLINE_SIMULATED_250;
+    execute(programs, realtime, files, resDir, conv, expArgs);
 
   }
 

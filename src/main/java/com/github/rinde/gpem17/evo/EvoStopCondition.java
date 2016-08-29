@@ -15,7 +15,13 @@
  */
 package com.github.rinde.gpem17.evo;
 
+import static com.google.common.base.Preconditions.checkState;
+
+import java.util.Set;
+
+import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.time.Clock;
+import com.github.rinde.rinsim.pdptw.common.RouteFollowingVehicle;
 import com.github.rinde.rinsim.pdptw.common.StatisticsDTO;
 import com.github.rinde.rinsim.pdptw.common.StatisticsProvider;
 import com.github.rinde.rinsim.scenario.StopCondition;
@@ -27,11 +33,13 @@ import com.google.common.collect.ImmutableSet;
  */
 enum EvoStopCondition implements StopCondition {
   INSTANCE {
-    private final long MAX_TIME = 2 * 60 * 60 * 1000L;
+    private final long MAX_TIME = 1 * 60 * 60 * 1000L;
+    private final int PARCEL_THRESHOLD = 20;
 
     @Override
     public ImmutableSet<Class<?>> getTypes() {
-      return ImmutableSet.of(Clock.class, StatisticsProvider.class);
+      return ImmutableSet.of(Clock.class, StatisticsProvider.class,
+        RoadModel.class);
     }
 
     // if no more than half the vehicles have moved after two hours, we should
@@ -39,11 +47,36 @@ enum EvoStopCondition implements StopCondition {
     @Override
     public boolean evaluate(TypeProvider provider) {
       long time = provider.get(Clock.class).getCurrentTime();
-      if (time > MAX_TIME) {
+
+      // only check every minute
+      if (time % 60000 == 0) {
         StatisticsDTO stats =
           provider.get(StatisticsProvider.class).getStatistics();
 
-        return stats.movedVehicles <= stats.totalVehicles / 2;
+        RoadModel rm = provider.get(RoadModel.class);
+        Set<RouteFollowingVehicle> vehicles =
+          rm.getObjectsOfType(RouteFollowingVehicle.class);
+
+        checkState(vehicles.size() == stats.totalVehicles);
+
+        int numNonEmptyRoutes = 0;
+        for (RouteFollowingVehicle v : vehicles) {
+          if (!v.getRoute().isEmpty()) {
+            numNonEmptyRoutes++;
+          }
+        }
+
+        // only one vehicle has a route and only one has moved
+        if (numNonEmptyRoutes == 1
+          && stats.movedVehicles == 1
+          && stats.totalParcels > PARCEL_THRESHOLD) {
+          return true;
+        }
+
+        if (time > MAX_TIME && stats.totalParcels > PARCEL_THRESHOLD) {
+          return stats.movedVehicles <= stats.totalVehicles / 2;
+        }
+
       }
       return false;
     }

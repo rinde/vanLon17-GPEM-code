@@ -179,7 +179,7 @@ public class FitnessEvaluator extends BaseEvaluator {
     return numScenariosPerGen;
   }
 
-  enum Converter implements Function<Scenario, Scenario> {
+  public enum Converter implements Function<Scenario, Scenario> {
     INSTANCE {
       @Override
       public Scenario apply(Scenario input) {
