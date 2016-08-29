@@ -44,11 +44,14 @@ abstract class ResultWriter implements ResultListener {
   final File timeDeviationsDirectory;
   final Gendreau06ObjectiveFunction objectiveFunction;
   final boolean realtime;
+  private final boolean createFinalFiles;
 
-  ResultWriter(File target, Gendreau06ObjectiveFunction objFunc, boolean rt) {
+  ResultWriter(File target, Gendreau06ObjectiveFunction objFunc, boolean rt,
+      boolean finalFiles) {
     experimentDirectory = target;
     objectiveFunction = objFunc;
     realtime = rt;
+    createFinalFiles = finalFiles;
     if (rt) {
       timeDeviationsDirectory =
         new File(experimentDirectory, "time-deviations");
@@ -105,26 +108,27 @@ abstract class ResultWriter implements ResultListener {
 
   @Override
   public void doneComputing(ExperimentResults results) {
-    final Multimap<MASConfiguration, SimulationResult> groupedResults =
-      LinkedHashMultimap.create();
-    for (final SimulationResult sr : results.sortedResults()) {
-      groupedResults.put(sr.getSimArgs().getMasConfig(), sr);
-    }
+    if (createFinalFiles) {
+      final Multimap<MASConfiguration, SimulationResult> groupedResults =
+        LinkedHashMultimap.create();
+      for (final SimulationResult sr : results.sortedResults()) {
+        groupedResults.put(sr.getSimArgs().getMasConfig(), sr);
+      }
 
-    for (final MASConfiguration config : groupedResults.keySet()) {
-      final Collection<SimulationResult> group = groupedResults.get(config);
+      for (final MASConfiguration config : groupedResults.keySet()) {
+        final Collection<SimulationResult> group = groupedResults.get(config);
 
-      final File configResult =
-        new File(experimentDirectory, config.getName() + "-final.csv");
+        final File configResult =
+          new File(experimentDirectory, config.getName() + "-final.csv");
 
-      // deletes the file in case it already exists
-      configResult.delete();
-      createCSVWithHeader(configResult);
-      for (final SimulationResult sr : group) {
-        appendSimResult(sr, configResult);
+        // deletes the file in case it already exists
+        configResult.delete();
+        createCSVWithHeader(configResult);
+        for (final SimulationResult sr : group) {
+          appendSimResult(sr, configResult);
+        }
       }
     }
-
   }
 
   abstract Iterable<Enum<?>> getFields();

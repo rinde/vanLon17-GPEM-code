@@ -148,6 +148,7 @@ public class FitnessEvaluator extends BaseEvaluator {
       generationDir,
       false,
       Converter.INSTANCE,
+      false,
       args);
 
     Map<MASConfiguration, GPNodeHolder> configMapping = new LinkedHashMap<>();

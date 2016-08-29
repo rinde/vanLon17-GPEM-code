@@ -41,8 +41,9 @@ public class VanLonHolvoetResultWriter extends ResultWriter {
   final String dataset;
 
   public VanLonHolvoetResultWriter(File target,
-      Gendreau06ObjectiveFunction objFunc, String datasetPath, boolean rt) {
-    super(target, objFunc, rt);
+      Gendreau06ObjectiveFunction objFunc, String datasetPath, boolean rt,
+      boolean createFinalFiles) {
+    super(target, objFunc, rt, createFinalFiles);
     dataset = datasetPath;
   }
 
