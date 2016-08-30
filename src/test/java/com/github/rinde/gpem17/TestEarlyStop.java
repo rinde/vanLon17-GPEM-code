@@ -56,16 +56,20 @@ public class TestEarlyStop {
 
     String prog5 =
       "(+ (x (if4 (if4 time 2.0 timeleft 10.0) (pow slack 2.0) (if4 insertioncost insertioncost slack 2.0) (/ insertionovertime time)) (- (x insertionflexibility insertiontardiness) (- insertionovertime slack))) (min (max (+ timeleft 10.0) (if4 0.0 insertiontardiness 10.0 time)) (/ (pow timeleft insertiontardiness) (+ 1.0 2.0))))";
+
+    String prog6 =
+      "(- (max (- (pow insertioncost 2.0) (max (neg 10.0) insertiontardiness)) (/ (+ (- insertiontardiness slack) (neg 0.0)) (max (max insertionovertime insertionovertime) (- 1.0 insertionflexibility)))) (+ (- (if4 (- insertiontardiness 2.0) (max (neg 10.0) insertiontardiness) (if4 2.0 timeleft 10.0 10.0) (+ insertioncost insertiontardiness)) (pow (/ 0.0 slack) (+ timeleft insertioncost))) (if4 (x (+ (- (if4 (- insertiontardiness 2.0) (pow 0.0 timeleft) (max 10.0 insertionflexibility) (neg 10.0)) (max (x (- (neg 1.0) (pow insertioncost 2.0)) (+ insertionflexibility 10.0)) insertionovertime)) (if4 (x (+ insertionflexibility 10.0) (x 10.0 10.0)) (max (max 10.0 insertionflexibility) (+ insertionflexibility insertioncost)) (neg (if4 0.0 insertiontraveltime timeleft insertionovertime)) (/ (/ (x timeleft insertioncost) insertionovertime) (min insertiontardiness time)))) (max (pow insertioncost 2.0) insertionovertime)) (pow insertioncost 2.0) (neg (if4 0.0 insertiontraveltime timeleft insertionovertime)) (/ (/ (x timeleft insertioncost) insertionovertime) (min insertiontardiness time)))))";
+
     Collection<GPFunc<GpGlobal>> funcs = new FunctionSet().create();
 
     List<GPProgram<GpGlobal>> progs = new ArrayList<>();
-    for (String p : asList(prog5, prog4, prog, prog2, prog3)) {
+    for (String p : asList(prog6, prog5, prog4, prog, prog2, prog3)) {
       progs.add(GPProgramParser.parseProgramFunc(p, funcs));
     }
 
     FileProvider.Builder files = FileProvider.builder()
       .add(Paths.get("files/train-dataset"))
-      .filter("regex:.*0.50-20-1.00-0\\.scen");
+      .filter("regex:.*0.50-20-1.00-70\\.scen");
 
     File parent = new File("files/test/results");
     Evaluate.execute(progs, false, files, parent, true, Converter.INSTANCE,

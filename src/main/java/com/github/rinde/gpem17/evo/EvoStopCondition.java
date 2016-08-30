@@ -33,8 +33,8 @@ import com.google.common.collect.ImmutableSet;
  */
 enum EvoStopCondition implements StopCondition {
   INSTANCE {
-    private final long MAX_TIME = 1 * 60 * 60 * 1000L;
-    private final int PARCEL_THRESHOLD = 20;
+    // private final long MAX_TIME = 1 * 60 * 60 * 1000L;
+    // private final int PARCEL_THRESHOLD = 20;
 
     @Override
     public ImmutableSet<Class<?>> getTypes() {
@@ -59,8 +59,8 @@ enum EvoStopCondition implements StopCondition {
 
         checkState(vehicles.size() == stats.totalVehicles);
 
-        int routeSizeLimit = (int) Math
-          .ceil(.5 * (((stats.totalParcels - stats.totalDeliveries) * 2d)));
+        int routeSizeLimit = Math.max(40, (int) Math
+          .ceil(.5 * (((stats.totalParcels - stats.totalDeliveries) * 2d))));
         // int numNonEmptyRoutes = 0;
         for (RouteFollowingVehicle v : vehicles) {
           if (!v.getRoute().isEmpty()) {
