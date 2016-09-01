@@ -167,7 +167,9 @@ public class FitnessEvaluator extends BaseEvaluator {
       double cost = GPEM17.OBJ_FUNC.computeCost(stats);
       float fitness = (float) cost;
       if (!GPEM17.OBJ_FUNC.isValidResult(stats)) {
-        fitness = Float.MAX_VALUE;
+        // if the simulation is terminated early, we give a huge penalty, which
+        // we reduce based on how far the simulation actually got.
+        fitness = Float.MAX_VALUE - stats.simulationTime;
       }
       String id = configMapping.get(sr.getSimArgs().getMasConfig()).string;
       convertedResults.add(SingleResult.create((float) fitness, id, sr));
