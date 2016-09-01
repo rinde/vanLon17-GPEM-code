@@ -116,8 +116,8 @@ public class GPEM17 {
     StochasticSupplier<? extends Communicator> cm =
       EvoBidder.realtimeBuilder(solver, OBJ_FUNC)
         .withReauctionCooldownPeriod(60000)
-        .withCheapestInsertionHeuristicForReauction();
-    // .withPriorityHeuristicForReauction();
+        // .withCheapestInsertionHeuristicForReauction();
+        .withPriorityHeuristicForReauction();
 
     String name = "ReAuction-RP-EVO-BID-EVO-" + id;
     return GPEM17.createConfig(solver, rp, cm, true, name);
@@ -133,8 +133,8 @@ public class GPEM17 {
     StochasticSupplier<? extends Communicator> cm =
       EvoBidder.simulatedTimeBuilder(solver, OBJ_FUNC)
         .withReauctionCooldownPeriod(60000)
-        .withCheapestInsertionHeuristicForReauction();
-    // .withPriorityHeuristicForReauction();
+        // .withCheapestInsertionHeuristicForReauction();
+        .withPriorityHeuristicForReauction();
 
     String name = "ReAuction-RP-EVO-BID-EVO-" + id;
 

@@ -6,11 +6,11 @@ stat = com.github.rinde.gpem17.evo.StatsLogger
 
 seed.0 = 123
 
-pop.subpop.0.size 	= 500
-generations 		= 100
+pop.subpop.0.size 	= 5
+generations 		= 10
 
-eval.distributed = true
-eval.num_scenarios_per_gen = 5
+eval.distributed = false
+eval.num_scenarios_per_gen = 2
 
 gp.koza.mutate.maxdepth = 17
 gp.koza.xover.maxdepth = 17
