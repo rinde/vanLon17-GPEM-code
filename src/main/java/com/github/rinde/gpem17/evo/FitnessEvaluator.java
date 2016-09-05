@@ -37,6 +37,7 @@ import com.github.rinde.ecj.GPProgram;
 import com.github.rinde.ecj.GPProgramParser;
 import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.GpGlobal;
 import com.github.rinde.gpem17.GPEM17;
+import com.github.rinde.gpem17.GPEM17.ReauctOpt;
 import com.github.rinde.gpem17.eval.Evaluate;
 import com.github.rinde.gpem17.eval.RtExperimentInfo;
 import com.github.rinde.rinsim.core.model.time.TimeModel;
@@ -61,7 +62,7 @@ import ec.util.Parameter;
 public class FitnessEvaluator extends BaseEvaluator {
 
   enum Properties {
-    DISTRIBUTED, NUM_SCENARIOS_PER_GEN;
+    DISTRIBUTED, NUM_SCENARIOS_PER_GEN, NUM_SCENARIOS_IN_LAST_GEN, REAUCT_OPT;
 
     public String toString() {
       return name().toLowerCase();
@@ -77,6 +78,8 @@ public class FitnessEvaluator extends BaseEvaluator {
   final ImmutableList<Path> paths;
   boolean distributed;
   int numScenariosPerGen;
+  int numScenariosInLastGen;
+  ReauctOpt reauctOpt;
 
   public FitnessEvaluator() {
     super();
@@ -109,6 +112,18 @@ public class FitnessEvaluator extends BaseEvaluator {
     numScenariosPerGen =
       state.parameters.getInt(
         base.push(Properties.NUM_SCENARIOS_PER_GEN.toString()), null);
+    numScenariosInLastGen =
+      state.parameters.getInt(
+        base.push(Properties.NUM_SCENARIOS_IN_LAST_GEN.toString()), null);
+
+    String ropt =
+      state.parameters.getString(base.push(Properties.REAUCT_OPT.toString()),
+        null);
+    checkArgument(ropt != null
+      && (ropt.equals("EVO") || ropt.equals("CIH")),
+      "%s should be 'EVO' or 'CIH', found '%s'.",
+      base.push(Properties.REAUCT_OPT.toString()), ropt);
+    reauctOpt = ReauctOpt.valueOf(ropt);
   }
 
   @Override
@@ -116,8 +131,12 @@ public class FitnessEvaluator extends BaseEvaluator {
     SetMultimap<GPNodeHolder, IndividualHolder> mapping =
       getGPFitnessMapping(state);
     int fromIndex = state.generation * numScenariosPerGen;
-    int toIndex = fromIndex + numScenariosPerGen;
-
+    int toIndex;
+    if (state.generation == state.numGenerations - 1) {
+      toIndex = fromIndex + numScenariosInLastGen;
+    } else {
+      toIndex = fromIndex + numScenariosPerGen;
+    }
     System.out.println(paths.subList(fromIndex, toIndex));
 
     String[] args;
@@ -126,7 +145,6 @@ public class FitnessEvaluator extends BaseEvaluator {
     } else {
       args = new String[] {"--repetitions", "1"};
     }
-
     File generationDir =
       new File(((StatsLogger) state.statistics).experimentDirectory,
         "generation" + state.generation);
@@ -134,11 +152,9 @@ public class FitnessEvaluator extends BaseEvaluator {
     List<GPProgram<GpGlobal>> programs = new ArrayList<>();
     List<GPNodeHolder> nodes = ImmutableList.copyOf(mapping.keySet());
     for (GPNodeHolder node : nodes) {
-
       final GPProgram<GpGlobal> prog = GPProgramParser
         .convertToGPProgram((GPBaseNode<GpGlobal>) node.trees[0].child);
       programs.add(prog);
-
     }
 
     ExperimentResults results = Evaluate.execute(
@@ -149,6 +165,7 @@ public class FitnessEvaluator extends BaseEvaluator {
       false,
       Converter.INSTANCE,
       false,
+      reauctOpt,
       args);
 
     Map<MASConfiguration, GPNodeHolder> configMapping = new LinkedHashMap<>();
@@ -180,6 +197,9 @@ public class FitnessEvaluator extends BaseEvaluator {
 
   @Override
   protected int expectedNumberOfResultsPerGPIndividual(EvolutionState state) {
+    if (state.generation == state.numGenerations - 1) {
+      return numScenariosInLastGen;
+    }
     return numScenariosPerGen;
   }
 

@@ -29,6 +29,7 @@ import com.github.rinde.ecj.GPFunc;
 import com.github.rinde.ecj.GPProgram;
 import com.github.rinde.ecj.GPProgramParser;
 import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.GpGlobal;
+import com.github.rinde.gpem17.GPEM17.ReauctOpt;
 import com.github.rinde.gpem17.eval.Evaluate;
 import com.github.rinde.gpem17.evo.FitnessEvaluator.Converter;
 import com.github.rinde.gpem17.evo.FunctionSet;
@@ -73,7 +74,7 @@ public class TestEarlyStop {
 
     File parent = new File("files/test/results");
     Evaluate.execute(progs, false, files, parent, true, Converter.INSTANCE,
-      false,
+      false, ReauctOpt.EVO,
       "-g", "true", "-t", "1", "--repetitions", "1");
 
   }

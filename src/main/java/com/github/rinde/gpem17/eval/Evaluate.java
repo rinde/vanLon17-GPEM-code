@@ -37,6 +37,7 @@ import com.github.rinde.ecj.GPProgram;
 import com.github.rinde.ecj.GPProgramParser;
 import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.GpGlobal;
 import com.github.rinde.gpem17.GPEM17;
+import com.github.rinde.gpem17.GPEM17.ReauctOpt;
 import com.github.rinde.gpem17.evo.FunctionSet;
 import com.github.rinde.rinsim.core.model.time.TimeModel;
 import com.github.rinde.rinsim.experiment.CommandLineProgress;
@@ -95,6 +96,11 @@ public class Evaluate {
       programs.add(GPProgramParser.parseProgramFunc(line, funcs));
     }
 
+    checkArgument(args.length >= 3
+      && (args[2].equals("EVO") || args[2].equals("CIH")),
+      "The third argument should be 'EVO' or 'CIH', found '%s'.", args[2]);
+    ReauctOpt reauctOpt = ReauctOpt.valueOf(args[2]);
+
     final String[] expArgs = new String[args.length - 2];
     System.arraycopy(args, 2, expArgs, 0, args.length - 2);
     File resDir =
@@ -106,7 +112,8 @@ public class Evaluate {
 
     Function<Scenario, Scenario> conv =
       realtime ? null : ScenarioConverter.TO_ONLINE_SIMULATED_250;
-    execute(programs, realtime, files, resDir, true, conv, true, expArgs);
+    execute(programs, realtime, files, resDir, true, conv, true, reauctOpt,
+      expArgs);
 
   }
 
@@ -118,6 +125,7 @@ public class Evaluate {
       boolean createTimeStampedResDir,
       @Nullable Function<Scenario, Scenario> scenarioConverter,
       boolean createFinalFiles,
+      ReauctOpt reauctOpt,
       String... expArgs) {
     checkArgument(realtime ^ scenarioConverter != null);
     final long startTime = System.currentTimeMillis();
@@ -177,9 +185,9 @@ public class Evaluate {
         .append(System.lineSeparator());
 
       if (realtime) {
-        exp.addConfiguration(GPEM17.createRtConfig(prog, progId));
+        exp.addConfiguration(GPEM17.createRtConfig(prog, progId, reauctOpt));
       } else {
-        exp.addConfiguration(GPEM17.createStConfig(prog, progId));
+        exp.addConfiguration(GPEM17.createStConfig(prog, progId, reauctOpt));
       }
     };
 

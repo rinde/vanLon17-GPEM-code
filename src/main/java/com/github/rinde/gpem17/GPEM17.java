@@ -105,39 +105,46 @@ public class GPEM17 {
     return builder.build();
   }
 
+  public enum ReauctOpt {
+    CIH, EVO;
+  }
+
   public static MASConfiguration createRtConfig(
       PriorityHeuristic<GpGlobal> solver,
-      String id) {
+      String id,
+      ReauctOpt reauctOpt) {
     StochasticSupplier<RoutePlanner> rp =
       RtSolverRoutePlanner.supplier(
         RtStAdapters
           .toRealtime(CheapestInsertionHeuristic.supplier(OBJ_FUNC)));
 
-    StochasticSupplier<? extends Communicator> cm =
-      EvoBidder.realtimeBuilder(solver, OBJ_FUNC)
-        .withReauctionCooldownPeriod(60000)
-        // .withCheapestInsertionHeuristicForReauction();
-        .withPriorityHeuristicForReauction();
+    EvoBidder.Builder cm = EvoBidder.realtimeBuilder(solver, OBJ_FUNC)
+      .withReauctionCooldownPeriod(60000);
 
-    String name = "ReAuction-RP-EVO-BID-EVO-" + id;
-    return GPEM17.createConfig(solver, rp, cm, true, name);
+    if (reauctOpt == ReauctOpt.CIH) {
+      cm = cm.withCheapestInsertionHeuristicForReauction();
+    } else {
+      cm = cm.withPriorityHeuristicForReauction();
+    }
+    String name = "RTMAS-RP-CIH-BID-EVO-REAUCT-" + reauctOpt + "-" + id;
+    return createConfig(solver, rp, cm, true, name);
   }
 
   public static MASConfiguration createStConfig(
       PriorityHeuristic<GpGlobal> solver,
-      String id) {
+      String id, ReauctOpt reauctOpt) {
     StochasticSupplier<RoutePlanner> rp =
       RtSolverRoutePlanner.simulatedTimeSupplier(
         CheapestInsertionHeuristic.supplier(OBJ_FUNC));
+    EvoBidder.Builder cm = EvoBidder.simulatedTimeBuilder(solver, OBJ_FUNC)
+      .withReauctionCooldownPeriod(60000);
 
-    StochasticSupplier<? extends Communicator> cm =
-      EvoBidder.simulatedTimeBuilder(solver, OBJ_FUNC)
-        .withReauctionCooldownPeriod(60000)
-        // .withCheapestInsertionHeuristicForReauction();
-        .withPriorityHeuristicForReauction();
-
-    String name = "ReAuction-RP-EVO-BID-EVO-" + id;
-
+    if (reauctOpt == ReauctOpt.CIH) {
+      cm = cm.withCheapestInsertionHeuristicForReauction();
+    } else {
+      cm = cm.withPriorityHeuristicForReauction();
+    }
+    String name = "STMAS-RP-CIH-BID-EVO-REAUCT-" + reauctOpt + "-" + id;
     return createConfig(solver, rp, cm, false, name);
   }
 
