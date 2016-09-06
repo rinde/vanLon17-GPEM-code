@@ -101,8 +101,8 @@ public class Evaluate {
       "The third argument should be 'EVO' or 'CIH', found '%s'.", args[2]);
     ReauctOpt reauctOpt = ReauctOpt.valueOf(args[2]);
 
-    final String[] expArgs = new String[args.length - 2];
-    System.arraycopy(args, 2, expArgs, 0, args.length - 2);
+    final String[] expArgs = new String[args.length - 3];
+    System.arraycopy(args, 3, expArgs, 0, args.length - 3);
     File resDir =
       realtime ? new File(RT_RESULTS_DIR) : new File(ST_RESULTS_DIR);
 
