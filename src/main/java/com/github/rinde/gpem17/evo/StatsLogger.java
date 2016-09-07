@@ -180,12 +180,11 @@ public class StatsLogger extends GPStats {
 
   static File createExperimentDir(File target) {
     final String timestamp = ISODateTimeFormat.dateHourMinuteSecond()
-      .print(System.currentTimeMillis());
+      .print(System.currentTimeMillis()).replace(":", "");
     final File experimentDirectory = new File(target, timestamp);
     experimentDirectory.mkdirs();
 
     final Path latest = Paths.get(target.getAbsolutePath(), "latest/");
-
     try {
       java.nio.file.Files.deleteIfExists(latest);
       java.nio.file.Files.createSymbolicLink(

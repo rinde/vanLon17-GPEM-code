@@ -214,7 +214,7 @@ public class Evaluate {
 
   static File createExperimentDir(File target) {
     final String timestamp = ISODateTimeFormat.dateHourMinuteSecond()
-      .print(System.currentTimeMillis());
+      .print(System.currentTimeMillis()).replace(":", "");
     final File experimentDirectory = new File(target, timestamp);
     experimentDirectory.mkdirs();
 
