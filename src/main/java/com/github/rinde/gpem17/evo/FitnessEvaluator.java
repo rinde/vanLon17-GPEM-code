@@ -69,7 +69,7 @@ public class FitnessEvaluator extends BaseEvaluator {
     }
   }
 
-  static final String TRAINSET_PATH = "files/train-dataset";
+  static final String TRAINSET_PATH = "files/dataset5000";
   static final long MAX_SIM_TIME = 8 * 60 * 60 * 1000L;
 
   static final Pattern CAPTURE_INSTANCE_ID =
