@@ -24,7 +24,6 @@ import ec.Evolve;
 public class Train {
 
   public static void main(String[] args) {
-
     Evolve.main(new String[] {"-file", "files/config/gpem17.params"});
   }
 

@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.io.FileUtils;
 import org.joda.time.Duration;
 import org.joda.time.format.ISODateTimeFormat;
 import org.joda.time.format.PeriodFormat;
@@ -80,6 +81,23 @@ public class StatsLogger extends GPStats {
   }
 
   public void setup(final EvolutionState state, final Parameter base) {
+
+    String fileName = null;
+    for (int i = 0; i < state.runtimeArguments.length; i++) {
+      if (state.runtimeArguments[i].equals("-file")) {
+        fileName = state.runtimeArguments[i + 1];
+      }
+    }
+    System.out.println("Reading properties from: " + fileName);
+
+    File dest = new File(experimentDirectory, "config");
+
+    try {
+      dest.mkdirs();
+      FileUtils.copyDirectory(new File(fileName).getParentFile(), dest);
+    } catch (IOException e) {
+      throw new IllegalStateException(e);
+    }
     super.setup(state, base);
   }
 
