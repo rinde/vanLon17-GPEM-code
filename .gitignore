@@ -2,6 +2,7 @@ core/files/test/
 files/test/
 files/results/
 files/vanLonHolvoet15/
+files/dataset5000/
 files/train-dataset/
 example/src/main/java/rinde/sim/playground/
 .DS_Store

@@ -12,3 +12,6 @@ mvn clean compile exec:java -Dexec.mainClass="com.github.rinde.gpem17.GenerateTr
 ```
 
 Generating all 13.500 train scenarios takes about 1 hour and 45 minutes on a 24 core machine (fully utilizing all cores). One can also use the generated files as described in the next section.
+
+
+Generating all 45.000 train scenarios (in dataset5000) took about 18 minutes on a 24 core machine (fully utilizing all cores).
