@@ -31,12 +31,12 @@ public class GenerateTrainDataset {
   public static void main(String[] args) {
     final long time = System.currentTimeMillis();
     final DatasetGenerator generator = DatasetGenerator.builder()
-      .setDatasetDir("files/dataset/")
+      .setDatasetDir("files/dataset5000/")
       .setRandomSeed(20160802)
       .setDynamismLevels(asList(.2, .5, .8))
       .setUrgencyLevels(asList(5L, 20L, 35L))
-      .setScaleLevels(asList(1d, 5d, 10d))
-      .setNumInstances(500)
+      .setScaleLevels(asList(1d))
+      .setNumInstances(5000)
       .build();
 
     generator.generate();
