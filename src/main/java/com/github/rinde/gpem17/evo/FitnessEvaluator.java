@@ -62,7 +62,7 @@ import ec.util.Parameter;
 public class FitnessEvaluator extends BaseEvaluator {
 
   enum Properties {
-    DISTRIBUTED, NUM_SCENARIOS_PER_GEN, NUM_SCENARIOS_IN_LAST_GEN, REAUCT_OPT;
+    DISTRIBUTED, COMPOSITE_SIZE, NUM_SCENARIOS_PER_GEN, NUM_SCENARIOS_IN_LAST_GEN, REAUCT_OPT;
 
     public String toString() {
       return name().toLowerCase();
@@ -77,6 +77,7 @@ public class FitnessEvaluator extends BaseEvaluator {
 
   final ImmutableList<Path> paths;
   boolean distributed;
+  int compositeSize;
   int numScenariosPerGen;
   int numScenariosInLastGen;
   ReauctOpt reauctOpt;
@@ -109,6 +110,9 @@ public class FitnessEvaluator extends BaseEvaluator {
     distributed =
       state.parameters.getBoolean(base.push(Properties.DISTRIBUTED.toString()),
         null, false);
+    compositeSize =
+      state.parameters.getInt(
+        base.push(Properties.COMPOSITE_SIZE.toString()), null);
     numScenariosPerGen =
       state.parameters.getInt(
         base.push(Properties.NUM_SCENARIOS_PER_GEN.toString()), null);
@@ -141,7 +145,8 @@ public class FitnessEvaluator extends BaseEvaluator {
 
     String[] args;
     if (distributed) {
-      args = new String[] {"--jppf", "--repetitions", "1"};
+      args = new String[] {"--jppf", "--repetitions", "1", "--composite-size",
+        Integer.toString(compositeSize)};
     } else {
       args = new String[] {"--repetitions", "1"};
     }

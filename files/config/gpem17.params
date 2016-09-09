@@ -6,15 +6,16 @@ stat = com.github.rinde.gpem17.evo.StatsLogger
 
 seed.0 = 123
 
-pop.subpop.0.size 	= 1000
-generations 		= 100
+pop.subpop.0.size 	= 500
+generations 		= 25
 
 eval.distributed = true
-eval.num_scenarios_per_gen = 3
-eval.num_scenarios_in_last_gen = 25
+eval.composite_size = 25
+eval.num_scenarios_per_gen = 50
+eval.num_scenarios_in_last_gen = 250
 eval.reauct_opt = EVO
 
 breed.elite.0 = 1
-select.tournament.size = 5
+select.tournament.size = 7
 gp.koza.mutate.maxdepth = 17
 gp.koza.xover.maxdepth = 17
