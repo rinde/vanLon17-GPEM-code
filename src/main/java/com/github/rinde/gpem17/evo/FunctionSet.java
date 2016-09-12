@@ -37,7 +37,6 @@ import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.InsertionOverT
 import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.InsertionTardiness;
 import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.InsertionTravelTime;
 import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.Slack;
-import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.Time;
 import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.TimeLeft;
 
 /**
@@ -69,7 +68,6 @@ public class FunctionSet extends GPFuncSet<GpGlobal> {
       new InsertionTravelTime(),
       new InsertionTardiness(),
       new InsertionOverTime(),
-      new Time(),
       new TimeLeft(),
       new Slack());
   }
