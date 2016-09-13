@@ -35,7 +35,7 @@ import com.github.rinde.ecj.GPBaseNode;
 import com.github.rinde.ecj.GPComputationResult;
 import com.github.rinde.ecj.GPProgram;
 import com.github.rinde.ecj.GPProgramParser;
-import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.GpGlobal;
+import com.github.rinde.evo4mas.common.GpGlobal;
 import com.github.rinde.gpem17.GPEM17;
 import com.github.rinde.gpem17.GPEM17.ReauctOpt;
 import com.github.rinde.gpem17.eval.Evaluate;

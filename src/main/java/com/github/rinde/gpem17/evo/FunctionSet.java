@@ -30,14 +30,20 @@ import com.github.rinde.ecj.GenericFunctions.Mul;
 import com.github.rinde.ecj.GenericFunctions.Neg;
 import com.github.rinde.ecj.GenericFunctions.Pow;
 import com.github.rinde.ecj.GenericFunctions.Sub;
-import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.GpGlobal;
+import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.Ado;
+import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.DeliveryUrgency;
 import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.InsertionCost;
 import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.InsertionFlexibility;
 import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.InsertionOverTime;
 import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.InsertionTardiness;
 import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.InsertionTravelTime;
+import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.Mado;
+import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.Mido;
+import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.PickupUrgency;
+import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.RouteLength;
 import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.Slack;
 import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.TimeLeft;
+import com.github.rinde.evo4mas.common.GpGlobal;
 
 /**
  * 
@@ -63,13 +69,20 @@ public class FunctionSet extends GPFuncSet<GpGlobal> {
       new Constant<GpGlobal>(2),
       new Constant<GpGlobal>(1),
       new Constant<GpGlobal>(0),
+      /* VARIABLES */
       new InsertionFlexibility(),
       new InsertionCost(),
       new InsertionTravelTime(),
       new InsertionTardiness(),
       new InsertionOverTime(),
       new TimeLeft(),
-      new Slack());
+      new Slack(),
+      new Ado(),
+      new Mido(),
+      new Mado(),
+      new RouteLength(),
+      new PickupUrgency(),
+      new DeliveryUrgency());
   }
 
 }

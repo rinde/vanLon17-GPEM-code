@@ -17,7 +17,7 @@ package com.github.rinde.gpem17;
 
 import com.github.rinde.ecj.PriorityHeuristic;
 import com.github.rinde.evo4mas.common.EvoBidder;
-import com.github.rinde.evo4mas.common.GlobalStateObjectFunctions.GpGlobal;
+import com.github.rinde.evo4mas.common.GpGlobal;
 import com.github.rinde.logistics.pdptw.mas.TruckFactory.DefaultTruckFactory;
 import com.github.rinde.logistics.pdptw.mas.comm.AuctionCommModel;
 import com.github.rinde.logistics.pdptw.mas.comm.AuctionPanel;
