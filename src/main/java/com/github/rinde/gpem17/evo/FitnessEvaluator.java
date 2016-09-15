@@ -62,7 +62,7 @@ import ec.util.Parameter;
 public class FitnessEvaluator extends BaseEvaluator {
 
   enum Properties {
-    DISTRIBUTED, COMPOSITE_SIZE, NUM_SCENARIOS_PER_GEN, NUM_SCENARIOS_IN_LAST_GEN, REAUCT_OPT;
+    DISTRIBUTED, COMPOSITE_SIZE, NUM_SCENARIOS_PER_GEN, NUM_SCENARIOS_IN_LAST_GEN, REAUCT_OPT, USE_DIFFERENT_SCENARIOS_IN_EVERY_GENERATION;
 
     public String toString() {
       return name().toLowerCase();
@@ -80,6 +80,7 @@ public class FitnessEvaluator extends BaseEvaluator {
   int compositeSize;
   int numScenariosPerGen;
   int numScenariosInLastGen;
+  boolean useDifferentScenariosEveryGen;
   ReauctOpt reauctOpt;
 
   public FitnessEvaluator() {
@@ -119,6 +120,11 @@ public class FitnessEvaluator extends BaseEvaluator {
     numScenariosInLastGen =
       state.parameters.getInt(
         base.push(Properties.NUM_SCENARIOS_IN_LAST_GEN.toString()), null);
+    useDifferentScenariosEveryGen =
+      state.parameters.getBoolean(
+        base.push(
+          Properties.USE_DIFFERENT_SCENARIOS_IN_EVERY_GENERATION.toString()),
+        null, true);
 
     String ropt =
       state.parameters.getString(base.push(Properties.REAUCT_OPT.toString()),
@@ -134,7 +140,12 @@ public class FitnessEvaluator extends BaseEvaluator {
   public void evaluatePopulation(EvolutionState state) {
     SetMultimap<GPNodeHolder, IndividualHolder> mapping =
       getGPFitnessMapping(state);
-    int fromIndex = state.generation * numScenariosPerGen;
+    int fromIndex;
+    if (useDifferentScenariosEveryGen) {
+      fromIndex = state.generation * numScenariosPerGen;
+    } else {
+      fromIndex = 0;
+    }
     int toIndex;
     if (state.generation == state.numGenerations - 1) {
       toIndex = fromIndex + numScenariosInLastGen;
