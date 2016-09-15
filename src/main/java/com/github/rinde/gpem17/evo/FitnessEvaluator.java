@@ -49,6 +49,7 @@ import com.github.rinde.rinsim.pdptw.common.StatisticsDTO;
 import com.github.rinde.rinsim.scenario.Scenario;
 import com.github.rinde.rinsim.scenario.StopConditions;
 import com.google.common.base.Function;
+import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.SetMultimap;
 
@@ -62,7 +63,7 @@ import ec.util.Parameter;
 public class FitnessEvaluator extends BaseEvaluator {
 
   enum Properties {
-    DISTRIBUTED, COMPOSITE_SIZE, NUM_SCENARIOS_PER_GEN, NUM_SCENARIOS_IN_LAST_GEN, REAUCT_OPT, USE_DIFFERENT_SCENARIOS_IN_EVERY_GENERATION;
+    DISTRIBUTED, COMPOSITE_SIZE, NUM_SCENARIOS_PER_GEN, NUM_SCENARIOS_IN_LAST_GEN, REAUCT_OPT, USE_DIFFERENT_SCENARIOS_IN_EVERY_GENERATION, SCENARIOS_REGEX;
 
     public String toString() {
       return name().toLowerCase();
@@ -72,10 +73,10 @@ public class FitnessEvaluator extends BaseEvaluator {
   static final String TRAINSET_PATH = "files/dataset5000";
   static final long MAX_SIM_TIME = 8 * 60 * 60 * 1000L;
 
-  static final Pattern CAPTURE_INSTANCE_ID =
-    Pattern.compile(".*-(\\d+?)\\.scen");
+  static final Pattern CAPTURE_SCENARIO_NAME_PARTS =
+    Pattern.compile(".*(0\\.\\d0)-(\\d+)-(\\d\\.00)-(\\d+?)\\.scen");
 
-  final ImmutableList<Path> paths;
+  ImmutableList<Path> paths;
   boolean distributed;
   int compositeSize;
   int numScenariosPerGen;
@@ -83,28 +84,7 @@ public class FitnessEvaluator extends BaseEvaluator {
   boolean useDifferentScenariosEveryGen;
   ReauctOpt reauctOpt;
 
-  public FitnessEvaluator() {
-    super();
-
-    List<Path> ps = new ArrayList<>(FileProvider.builder()
-      .add(Paths.get(TRAINSET_PATH))
-      .filter("regex:.*0\\.50-20-1\\.00-.*\\.scen")
-      .build().get().asList());
-
-    // sort on instance id
-    Collections.sort(ps, new Comparator<Path>() {
-      @Override
-      public int compare(Path o1, Path o2) {
-        Matcher m1 = CAPTURE_INSTANCE_ID.matcher(o1.getFileName().toString());
-        Matcher m2 = CAPTURE_INSTANCE_ID.matcher(o2.getFileName().toString());
-        checkArgument(m1.matches() && m2.matches());
-        int id1 = Integer.parseInt(m1.group(1));
-        int id2 = Integer.parseInt(m2.group(1));
-        return Integer.compare(id1, id2);
-      }
-    });
-    paths = ImmutableList.copyOf(ps);
-  }
+  public FitnessEvaluator() {}
 
   @Override
   public void setup(final EvolutionState state, final Parameter base) {
@@ -134,6 +114,48 @@ public class FitnessEvaluator extends BaseEvaluator {
       "%s should be 'EVO' or 'CIH', found '%s'.",
       base.push(Properties.REAUCT_OPT.toString()), ropt);
     reauctOpt = ReauctOpt.valueOf(ropt);
+
+    String regex = state.parameters.getString(
+      base.push(Properties.SCENARIOS_REGEX.toString()), null);
+
+    // .*0\\.50-20-1\\.00-.*\\.scen
+
+    List<Path> ps = new ArrayList<>(FileProvider.builder()
+      .add(Paths.get(TRAINSET_PATH))
+      .filter("regex:" + regex)
+      .build().get().asList());
+
+    checkArgument(!ps.isEmpty(), "The regex '%s' matches no files.", regex);
+
+    // sort on instance id
+    Collections.sort(ps, new Comparator<Path>() {
+      @Override
+      public int compare(Path o1, Path o2) {
+        Matcher m1 =
+          CAPTURE_SCENARIO_NAME_PARTS.matcher(o1.getFileName().toString());
+        Matcher m2 =
+          CAPTURE_SCENARIO_NAME_PARTS.matcher(o2.getFileName().toString());
+        checkArgument(m1.matches() && m2.matches(), "%s %s", o1, o2);
+
+        double dyn1 = Double.parseDouble(m1.group(1));
+        int urg1 = Integer.parseInt(m1.group(2));
+        double scale1 = Double.parseDouble(m1.group(3));
+        int id1 = Integer.parseInt(m1.group(4));
+
+        double dyn2 = Double.parseDouble(m2.group(1));
+        int urg2 = Integer.parseInt(m2.group(2));
+        double scale2 = Double.parseDouble(m2.group(3));
+        int id2 = Integer.parseInt(m2.group(4));
+
+        return ComparisonChain.start()
+          .compare(id1, id2)
+          .compare(dyn1, dyn2)
+          .compare(urg1, urg2)
+          .compare(scale1, scale2)
+          .result();
+      }
+    });
+    paths = ImmutableList.copyOf(ps);
   }
 
   @Override
