@@ -70,7 +70,7 @@ public class FitnessEvaluator extends BaseEvaluator {
     }
   }
 
-  static final String TRAINSET_PATH = "files/dataset5000";
+  private static final String TRAINSET_PATH = "files/dataset5000";
   static final long MAX_SIM_TIME = 8 * 60 * 60 * 1000L;
 
   static final Pattern CAPTURE_SCENARIO_NAME_PARTS =
@@ -118,8 +118,11 @@ public class FitnessEvaluator extends BaseEvaluator {
     String regex = state.parameters.getString(
       base.push(Properties.SCENARIOS_REGEX.toString()), null);
 
-    // .*0\\.50-20-1\\.00-.*\\.scen
+    paths = getScenarioPaths(regex);
+  }
 
+  public static ImmutableList<Path> getScenarioPaths(String regex) {
+    // .*0\\.50-20-1\\.00-.*\\.scen
     List<Path> ps = new ArrayList<>(FileProvider.builder()
       .add(Paths.get(TRAINSET_PATH))
       .filter("regex:" + regex)
@@ -155,7 +158,7 @@ public class FitnessEvaluator extends BaseEvaluator {
           .result();
       }
     });
-    paths = ImmutableList.copyOf(ps);
+    return ImmutableList.copyOf(ps);
   }
 
   @Override
