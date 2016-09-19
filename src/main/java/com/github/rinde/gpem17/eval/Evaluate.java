@@ -124,7 +124,7 @@ public class Evaluate {
       File resDir,
       boolean createTimeStampedResDir,
       @Nullable Function<Scenario, Scenario> scenarioConverter,
-      boolean createFinalFiles,
+      boolean createTmpFiles,
       ReauctOpt reauctOpt,
       String... expArgs) {
     checkArgument(realtime ^ scenarioConverter != null);
@@ -138,7 +138,7 @@ public class Evaluate {
 
     ResultWriter rw = new VanLonHolvoetResultWriter(resDir, GPEM17.OBJ_FUNC,
       scenarioFiles.build().get().iterator().next().getParent().toString(),
-      realtime, createFinalFiles);
+      realtime, true, createTmpFiles);
     Experiment.Builder exp = Experiment.builder()
       .addScenarios(scenarioFiles)
       .showGui(GPEM17.gui())

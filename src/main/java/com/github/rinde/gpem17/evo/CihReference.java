@@ -41,8 +41,8 @@ import com.github.rinde.rinsim.io.FileProvider;
 public class CihReference {
 
   public static void main(String[] args) {
-    final int generations = 25;
-    final int numScensInGen = 50;
+    final int generations = 100;
+    final int numScensInGen = 25;
     final int numScensInLastGen = 250;
     int totalScens = ((generations - 1) * numScensInGen) + numScensInLastGen;
     final String regex = ".*0\\.50-20-1\\.00-.*\\.scen";

@@ -39,26 +39,31 @@ import com.google.common.io.Files;
 public class VanLonHolvoetResultWriter extends ResultWriter {
 
   final String dataset;
+  boolean createTmpResultFiles;
 
   public VanLonHolvoetResultWriter(File target,
       Gendreau06ObjectiveFunction objFunc, String datasetPath, boolean rt,
-      boolean createFinalFiles) {
+      boolean createFinalFiles, boolean createTmpFiles) {
     super(target, objFunc, rt, createFinalFiles);
+    createTmpResultFiles = createTmpFiles;
     dataset = datasetPath;
   }
 
   @Override
   public void receive(SimulationResult result) {
-    final String configName = result.getSimArgs().getMasConfig().getName();
-    final File targetFile = new File(experimentDirectory, configName + ".csv");
+    if (createTmpResultFiles) {
+      final String configName = result.getSimArgs().getMasConfig().getName();
+      final File targetFile =
+        new File(experimentDirectory, configName + ".csv");
 
-    if (!targetFile.exists()) {
-      createCSVWithHeader(targetFile);
-    }
-    appendSimResult(result, targetFile);
+      if (!targetFile.exists()) {
+        createCSVWithHeader(targetFile);
+      }
+      appendSimResult(result, targetFile);
 
-    if (realtime) {
-      writeTimeLog(result);
+      if (realtime) {
+        writeTimeLog(result);
+      }
     }
   }
 
