@@ -112,13 +112,14 @@ public class GPEM17 {
   public static MASConfiguration createRtConfig(
       PriorityHeuristic<GpGlobal> solver,
       String id,
-      ReauctOpt reauctOpt) {
+      ReauctOpt reauctOpt,
+      Gendreau06ObjectiveFunction objFunc) {
     StochasticSupplier<RoutePlanner> rp =
       RtSolverRoutePlanner.supplier(
         RtStAdapters
-          .toRealtime(CheapestInsertionHeuristic.supplier(OBJ_FUNC)));
+          .toRealtime(CheapestInsertionHeuristic.supplier(objFunc)));
 
-    EvoBidder.Builder cm = EvoBidder.realtimeBuilder(solver, OBJ_FUNC)
+    EvoBidder.Builder cm = EvoBidder.realtimeBuilder(solver, objFunc)
       .withReauctionCooldownPeriod(60000);
 
     if (reauctOpt == ReauctOpt.CIH) {
@@ -132,11 +133,12 @@ public class GPEM17 {
 
   public static MASConfiguration createStConfig(
       PriorityHeuristic<GpGlobal> solver,
-      String id, ReauctOpt reauctOpt) {
+      String id, ReauctOpt reauctOpt,
+      Gendreau06ObjectiveFunction objFunc) {
     StochasticSupplier<RoutePlanner> rp =
       RtSolverRoutePlanner.simulatedTimeSupplier(
-        CheapestInsertionHeuristic.supplier(OBJ_FUNC));
-    EvoBidder.Builder cm = EvoBidder.simulatedTimeBuilder(solver, OBJ_FUNC)
+        CheapestInsertionHeuristic.supplier(objFunc));
+    EvoBidder.Builder cm = EvoBidder.simulatedTimeBuilder(solver, objFunc)
       .withReauctionCooldownPeriod(60000);
 
     if (reauctOpt == ReauctOpt.CIH) {

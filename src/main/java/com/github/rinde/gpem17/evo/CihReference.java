@@ -33,6 +33,7 @@ import com.github.rinde.gpem17.eval.Evaluate;
 import com.github.rinde.rinsim.experiment.Experiment.SimulationResult;
 import com.github.rinde.rinsim.experiment.ExperimentResults;
 import com.github.rinde.rinsim.io.FileProvider;
+import com.github.rinde.rinsim.scenario.gendreau06.Gendreau06ObjectiveFunction;
 
 /**
  * 
@@ -40,9 +41,12 @@ import com.github.rinde.rinsim.io.FileProvider;
  */
 public class CihReference {
 
+  static final Gendreau06ObjectiveFunction LESS_TT_OBJ_FUNC =
+    Gendreau06ObjectiveFunction.instance(50d, .5, 1d, 1d);
+
   public static void main(String[] args) {
-    final int generations = 100;
-    final int numScensInGen = 25;
+    final int generations = 50;
+    final int numScensInGen = 50;
     final int numScensInLastGen = 250;
     int totalScens = ((generations - 1) * numScensInGen) + numScensInLastGen;
     final String regex = ".*0\\.50-20-1\\.00-.*\\.scen";
@@ -52,7 +56,8 @@ public class CihReference {
         new FunctionSet().create());
 
     List<Path> paths =
-      FitnessEvaluator.getScenarioPaths(regex).subList(0, totalScens);
+      FitnessEvaluator.getScenarioPaths("files/dataset5000", regex).subList(0,
+        totalScens);
 
     File resDir = new File("files/results/cih/");
 
@@ -65,6 +70,7 @@ public class CihReference {
       FitnessEvaluator.Converter.INSTANCE,
       false,
       ReauctOpt.CIH,
+      LESS_TT_OBJ_FUNC,
       new String[] {"--repetitions", "1"});
 
     File statsLog = new File(resDir, "best-stats.csv");

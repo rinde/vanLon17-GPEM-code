@@ -118,13 +118,13 @@ public class FitnessEvaluator extends BaseEvaluator {
     String regex = state.parameters.getString(
       base.push(Properties.SCENARIOS_REGEX.toString()), null);
 
-    paths = getScenarioPaths(regex);
+    paths = getScenarioPaths(TRAINSET_PATH, regex);
   }
 
-  public static ImmutableList<Path> getScenarioPaths(String regex) {
+  public static ImmutableList<Path> getScenarioPaths(String dir, String regex) {
     // .*0\\.50-20-1\\.00-.*\\.scen
     List<Path> ps = new ArrayList<>(FileProvider.builder()
-      .add(Paths.get(TRAINSET_PATH))
+      .add(Paths.get(dir))
       .filter("regex:" + regex)
       .build().get().asList());
 
@@ -207,6 +207,7 @@ public class FitnessEvaluator extends BaseEvaluator {
       Converter.INSTANCE,
       false,
       reauctOpt,
+      GPEM17.OBJ_FUNC, // use default obj func
       args);
 
     Map<MASConfiguration, GPNodeHolder> configMapping = new LinkedHashMap<>();

@@ -49,6 +49,7 @@ import com.github.rinde.rinsim.io.FileProvider;
 import com.github.rinde.rinsim.scenario.Scenario;
 import com.github.rinde.rinsim.scenario.ScenarioIO;
 import com.github.rinde.rinsim.scenario.StopConditions;
+import com.github.rinde.rinsim.scenario.gendreau06.Gendreau06ObjectiveFunction;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
@@ -113,10 +114,11 @@ public class Evaluate {
     Function<Scenario, Scenario> conv =
       realtime ? null : ScenarioConverter.TO_ONLINE_SIMULATED_250;
     execute(programs, realtime, files, resDir, true, conv, true, reauctOpt,
-      expArgs);
+      GPEM17.OBJ_FUNC, expArgs);
 
   }
 
+  // objFunc is only used at runtime, not for analysis
   public static ExperimentResults execute(
       Iterable<GPProgram<GpGlobal>> programs,
       boolean realtime,
@@ -126,6 +128,7 @@ public class Evaluate {
       @Nullable Function<Scenario, Scenario> scenarioConverter,
       boolean createTmpFiles,
       ReauctOpt reauctOpt,
+      Gendreau06ObjectiveFunction objFuncUsedAtRuntime,
       String... expArgs) {
     checkArgument(realtime ^ scenarioConverter != null);
     final long startTime = System.currentTimeMillis();
@@ -185,9 +188,11 @@ public class Evaluate {
         .append(System.lineSeparator());
 
       if (realtime) {
-        exp.addConfiguration(GPEM17.createRtConfig(prog, progId, reauctOpt));
+        exp.addConfiguration(
+          GPEM17.createRtConfig(prog, progId, reauctOpt, objFuncUsedAtRuntime));
       } else {
-        exp.addConfiguration(GPEM17.createStConfig(prog, progId, reauctOpt));
+        exp.addConfiguration(
+          GPEM17.createStConfig(prog, progId, reauctOpt, objFuncUsedAtRuntime));
       }
     };
 

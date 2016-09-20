@@ -47,19 +47,19 @@ public class TestEarlyStop {
       "(x (x (- 0.0 1.0) (neg insertiontraveltime)) (x (/ insertioncost insertioncost) (neg insertioncost)))";
 
     String prog2 =
-      "(/ (neg (x (- 2.0 1.0) (neg insertiontardiness))) (min (x (/ insertiontardiness insertionovertime) (+ timeleft time)) (+ (- 10.0 insertionovertime) (min 1.0 insertionflexibility))))";
+      "(/ (neg (x (- 2.0 1.0) (neg insertiontardiness))) (min (x (/insertiontardiness insertionovertime) (+ timeleft timeleft)) (+ (- 10.0 insertionovertime) (min 1.0 insertionflexibility))))";
 
     String prog3 =
-      "(/ (if4 (min (x 2.0 insertiontraveltime) (max insertioncost insertionovertime)) (x (neg time) (pow time 0.0)) (+ (x 1.0 0.0) (min 0.0 10.0)) (/ (neg 0.0) (neg insertionovertime))) (/ (pow (neg 2.0) (if4 insertioncost timeleft 10.0 slack)) (pow (pow 10.0 insertiontardiness) (if4 0.0 slack 10.0 slack))))";
+      "(/ (if4 (min (x 2.0 insertiontraveltime) (max insertioncost insertionovertime)) (x (neg timeleft) (pow timeleft 0.0)) (+ (x 1.0 0.0) (min 0.0 10.0)) (/ (neg 0.0) (neg insertionovertime))) (/ (pow (neg 2.0) (if4 insertioncost timeleft 10.0 slack)) (pow (pow 10.0 insertiontardiness) (if4 0.0 slack 10.0 slack))))";
 
     String prog4 =
-      "(max (neg (pow (neg (max 0.0 insertionovertime)) (if4 (x insertionflexibility time) (max 10.0 insertioncost) (+ 2.0 insertionovertime) (if4 timeleft 0.0 timeleft 10.0)))) (neg (max (min (if4 1.0 10.0 10.0 0.0) (/ time 0.0)) (min (- insertionflexibility 10.0) (/ insertionflexibility 0.0)))))";
+      "(max (neg (pow (neg (max 0.0 insertionovertime)) (if4 (x insertionflexibility timeleft) (max 10.0 insertioncost) (+ 2.0 insertionovertime) (if4 timeleft 0.0 timeleft 10.0)))) (neg (max (min (if4 1.0 10.0 10.0 0.0) (/ timeleft 0.0)) (min (- insertionflexibility 10.0) (/ insertionflexibility 0.0)))))";
 
     String prog5 =
-      "(+ (x (if4 (if4 time 2.0 timeleft 10.0) (pow slack 2.0) (if4 insertioncost insertioncost slack 2.0) (/ insertionovertime time)) (- (x insertionflexibility insertiontardiness) (- insertionovertime slack))) (min (max (+ timeleft 10.0) (if4 0.0 insertiontardiness 10.0 time)) (/ (pow timeleft insertiontardiness) (+ 1.0 2.0))))";
+      "(+ (x (if4 (if4 timeleft 2.0 timeleft 10.0) (pow slack 2.0) (if4 insertioncost insertioncost slack 2.0) (/ insertionovertime timeleft)) (- (x insertionflexibility insertiontardiness) (- insertionovertime slack))) (min (max (+ timeleft 10.0) (if4 0.0 insertiontardiness 10.0 timeleft)) (/ (pow timeleft insertiontardiness) (+ 1.0 2.0))))";
 
     String prog6 =
-      "(- (max (- (pow insertioncost 2.0) (max (neg 10.0) insertiontardiness)) (/ (+ (- insertiontardiness slack) (neg 0.0)) (max (max insertionovertime insertionovertime) (- 1.0 insertionflexibility)))) (+ (- (if4 (- insertiontardiness 2.0) (max (neg 10.0) insertiontardiness) (if4 2.0 timeleft 10.0 10.0) (+ insertioncost insertiontardiness)) (pow (/ 0.0 slack) (+ timeleft insertioncost))) (if4 (x (+ (- (if4 (- insertiontardiness 2.0) (pow 0.0 timeleft) (max 10.0 insertionflexibility) (neg 10.0)) (max (x (- (neg 1.0) (pow insertioncost 2.0)) (+ insertionflexibility 10.0)) insertionovertime)) (if4 (x (+ insertionflexibility 10.0) (x 10.0 10.0)) (max (max 10.0 insertionflexibility) (+ insertionflexibility insertioncost)) (neg (if4 0.0 insertiontraveltime timeleft insertionovertime)) (/ (/ (x timeleft insertioncost) insertionovertime) (min insertiontardiness time)))) (max (pow insertioncost 2.0) insertionovertime)) (pow insertioncost 2.0) (neg (if4 0.0 insertiontraveltime timeleft insertionovertime)) (/ (/ (x timeleft insertioncost) insertionovertime) (min insertiontardiness time)))))";
+      "(- (max (- (pow insertioncost 2.0) (max (neg 10.0) insertiontardiness)) (/ (+ (- insertiontardiness slack) (neg 0.0)) (max (max insertionovertime insertionovertime) (- 1.0 insertionflexibility)))) (+ (- (if4 (- insertiontardiness 2.0) (max (neg 10.0) insertiontardiness) (if4 2.0 timeleft 10.0 10.0) (+ insertioncost insertiontardiness)) (pow (/ 0.0 slack) (+ timeleft insertioncost))) (if4 (x (+ (- (if4 (- insertiontardiness 2.0) (pow 0.0 timeleft) (max 10.0 insertionflexibility) (neg 10.0)) (max (x (- (neg 1.0) (pow insertioncost 2.0)) (+ insertionflexibility 10.0)) insertionovertime)) (if4 (x (+ insertionflexibility 10.0) (x 10.0 10.0)) (max (max 10.0 insertionflexibility) (+ insertionflexibility insertioncost)) (neg (if4 0.0 insertiontraveltime timeleft insertionovertime)) (/ (/ (x timeleft insertioncost) insertionovertime) (min insertiontardiness timeleft)))) (max (pow insertioncost 2.0) insertionovertime)) (pow insertioncost 2.0) (neg (if4 0.0 insertiontraveltime timeleft insertionovertime)) (/ (/ (x timeleft insertioncost) insertionovertime) (min insertiontardiness timeleft)))))";
 
     Collection<GPFunc<GpGlobal>> funcs = new FunctionSet().create();
 
@@ -74,7 +74,7 @@ public class TestEarlyStop {
 
     File parent = new File("files/test/results");
     Evaluate.execute(progs, false, files, parent, true, Converter.INSTANCE,
-      false, ReauctOpt.EVO,
+      false, ReauctOpt.EVO, GPEM17.OBJ_FUNC,
       "-g", "true", "-t", "1", "--repetitions", "1");
 
   }
