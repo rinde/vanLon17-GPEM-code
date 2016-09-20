@@ -15,6 +15,7 @@
  */
 package com.github.rinde.gpem17.evo;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Arrays.asList;
 
@@ -43,35 +44,53 @@ import com.github.rinde.rinsim.scenario.gendreau06.Gendreau06ObjectiveFunction;
 public class CihReference {
 
   static final Gendreau06ObjectiveFunction LESS_TT_OBJ_FUNC =
-    Gendreau06ObjectiveFunction.instance(50d, .25, 1d, 1d);
+    Gendreau06ObjectiveFunction.instance(50d, .5, 1d, 1d);
 
+  static final String DEFAULT_OBJ_FUNC_NM = "DEFAULT_OBJ_FUNC";
+  static final String LESS_TT_OBJ_FUNC_NM = "TT_1_2_OBJ_FUNC";
+
+  // 0 - scendir
+  // 1 - regex
+  // 2 - generations
+  // 3 - scens in gen
+  // 4 - scens in last gen
+  // 5 - normal obj func (DEFAULT_OBJ_FUNC), less tt obj func (LESS_TT_OBJ_FUNC)
   public static void main(String[] args) {
-    final int generations = 100;
-    final int numScensInGen = 50;
-    final int numScensInLastGen = 250;
+    String scenDir = args[0];
+    String regex = args[1];
+
+    final int generations = Integer.valueOf(args[2]);
+    final int numScensInGen = Integer.valueOf(args[3]);
+    final int numScensInLastGen = Integer.valueOf(args[4]);
     int totalScens = ((generations - 1) * numScensInGen) + numScensInLastGen;
-    final String regex = ".*0\\.50-20-1\\.00-.*\\.scen";
+    // final String regex = ".*0\\.50-20-1\\.00-.*\\.scen";
+
+    checkArgument(args[5].equals(DEFAULT_OBJ_FUNC_NM)
+      || args[5].equals(LESS_TT_OBJ_FUNC_NM));
+
+    boolean defaultObjFunc = args[5].equals(DEFAULT_OBJ_FUNC_NM);
 
     GPProgram<GpGlobal> prog =
       GPProgramParser.parseProgramFunc("(insertioncost)",
         new FunctionSet().create());
 
     List<Path> paths =
-      FitnessEvaluator.getScenarioPaths("files/dataset10k", regex).subList(0,
-        totalScens);
+      FitnessEvaluator.getScenarioPaths(scenDir, regex).subList(0, totalScens);
 
-    File resDir = new File("files/results/cih/");
+    File resDir =
+      new File(
+        "files/results/cih/S" + numScensInGen + "G" + generations + args[5]);
 
     ExperimentResults results = Evaluate.execute(
       asList(prog),
       false,
       FileProvider.builder().add(paths),
       resDir,
-      true,
+      false,
       FitnessEvaluator.Converter.INSTANCE,
       false,
       ReauctOpt.CIH,
-      GPEM17.OBJ_FUNC,
+      defaultObjFunc ? GPEM17.OBJ_FUNC : LESS_TT_OBJ_FUNC,
       new String[] {"--repetitions", "1"});
 
     File statsLog = new File(resDir, "best-stats.csv");
