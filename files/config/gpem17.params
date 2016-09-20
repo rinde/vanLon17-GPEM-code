@@ -6,7 +6,7 @@ stat = com.github.rinde.gpem17.evo.StatsLogger
 
 seed.0 = 123
 
-pop.subpop.0.size 	= 50
+pop.subpop.0.size 	= 500
 generations 		= 100
 
 eval.distributed = true
