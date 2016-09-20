@@ -45,13 +45,15 @@ abstract class ResultWriter implements ResultListener {
   final Gendreau06ObjectiveFunction objectiveFunction;
   final boolean realtime;
   private final boolean createFinalFiles;
+  private final boolean minimizeIO;
 
   ResultWriter(File target, Gendreau06ObjectiveFunction objFunc, boolean rt,
-      boolean finalFiles) {
+      boolean finalFiles, boolean minimizeIOops) {
     experimentDirectory = target;
     objectiveFunction = objFunc;
     realtime = rt;
     createFinalFiles = finalFiles;
+    minimizeIO = minimizeIOops;
     if (rt) {
       timeDeviationsDirectory =
         new File(experimentDirectory, "time-deviations");
@@ -109,7 +111,12 @@ abstract class ResultWriter implements ResultListener {
   @Override
   public void doneComputing(ExperimentResults results) {
     if (createFinalFiles) {
-      new Thread(new FinalWriter(this, results)).start();
+
+      if (minimizeIO) {
+        new Thread(new FinalWriter(this, results)).start();
+      } else {
+        writeFinal(results);
+      }
     }
   }
 
@@ -120,17 +127,48 @@ abstract class ResultWriter implements ResultListener {
       groupedResults.put(sr.getSimArgs().getMasConfig(), sr);
     }
 
-    for (final MASConfiguration config : groupedResults.keySet()) {
-      final Collection<SimulationResult> group = groupedResults.get(config);
+    if (minimizeIO) {
+      StringBuilder sb =
+        new StringBuilder("name,").append(createHeader().toString());
+      for (final MASConfiguration config : groupedResults.keySet()) {
+        final Collection<SimulationResult> group = groupedResults.get(config);
+        for (final SimulationResult sr : group) {
+          sb.append(config.getName()).append(",");
+          appendTo(sr, sb);
+        }
+      }
 
-      final File configResult =
-        new File(experimentDirectory, config.getName() + "-final.csv");
+      final File combinedResult =
+        new File(experimentDirectory, "combined-final.csv");
+      try {
+        Files.createParentDirs(combinedResult);
+        Files.append(sb, combinedResult, Charsets.UTF_8);
+      } catch (final IOException e1) {
+        throw new IllegalStateException(e1);
+      }
+    } else {
 
-      // deletes the file in case it already exists
-      configResult.delete();
-      createCSVWithHeader(configResult);
-      for (final SimulationResult sr : group) {
-        appendSimResult(sr, configResult);
+      for (final MASConfiguration config : groupedResults.keySet()) {
+        final Collection<SimulationResult> group = groupedResults.get(config);
+
+        final File configResult =
+          new File(experimentDirectory, config.getName() + "-final.csv");
+
+        // deletes the file in case it already exists
+        configResult.delete();
+
+        StringBuilder sb = createHeader();
+        for (final SimulationResult sr : group) {
+          appendTo(sr, sb);
+        }
+
+        try {
+          Files.createParentDirs(configResult);
+          Files.append(sb, configResult, Charsets.UTF_8);
+        } catch (final IOException e1) {
+          throw new IllegalStateException(e1);
+        }
+
       }
     }
   }
@@ -154,14 +192,17 @@ abstract class ResultWriter implements ResultListener {
 
   abstract void appendSimResult(SimulationResult sr, File destFile);
 
+  abstract StringBuilder appendTo(SimulationResult sr, StringBuilder sb);
+
+  StringBuilder createHeader() {
+    return Joiner.on(",").appendTo(new StringBuilder(), getFields())
+      .append(System.lineSeparator());
+  }
+
   void createCSVWithHeader(File f) {
     try {
       Files.createParentDirs(f);
-      Files.append(
-        Joiner.on(",").appendTo(new StringBuilder(), getFields())
-          .append(System.lineSeparator()),
-        f,
-        Charsets.UTF_8);
+      Files.append(createHeader(), f, Charsets.UTF_8);
     } catch (final IOException e1) {
       throw new IllegalStateException(e1);
     }

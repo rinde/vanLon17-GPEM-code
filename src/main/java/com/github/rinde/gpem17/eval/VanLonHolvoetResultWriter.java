@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -37,16 +38,18 @@ import com.google.common.io.Files;
  * @author Rinde van Lon
  */
 public class VanLonHolvoetResultWriter extends ResultWriter {
-
+  final Map<File, Map<String, String>> scenarioPropsCache;
   final String dataset;
   boolean createTmpResultFiles;
 
   public VanLonHolvoetResultWriter(File target,
       Gendreau06ObjectiveFunction objFunc, String datasetPath, boolean rt,
-      boolean createFinalFiles, boolean createTmpFiles) {
-    super(target, objFunc, rt, createFinalFiles);
+      boolean createFinalFiles, boolean createTmpFiles,
+      boolean minimizeIO) {
+    super(target, objFunc, rt, createFinalFiles, minimizeIO);
     createTmpResultFiles = createTmpFiles;
     dataset = datasetPath;
+    scenarioPropsCache = new LinkedHashMap<>();
   }
 
   @Override
@@ -69,39 +72,54 @@ public class VanLonHolvoetResultWriter extends ResultWriter {
 
   @Override
   void appendSimResult(SimulationResult sr, File destFile) {
-    final String pc = sr.getSimArgs().getScenario().getProblemClass().getId();
-    final String id = sr.getSimArgs().getScenario().getProblemInstanceId();
-
     try {
-      final String scenarioName = Joiner.on("-").join(pc, id);
-      final List<String> propsStrings = Files.readLines(new File(
-        dataset + "/" + scenarioName + ".properties"),
-        Charsets.UTF_8);
-      final Map<String, String> properties = Splitter.on("\n")
-        .withKeyValueSeparator(" = ")
-        .split(Joiner.on("\n").join(propsStrings));
-
-      final ImmutableMap.Builder<Enum<?>, Object> map =
-        ImmutableMap.<Enum<?>, Object>builder()
-          .put(OutputFields.SCENARIO_ID, scenarioName)
-          .put(OutputFields.DYNAMISM, properties.get("dynamism_bin"))
-          .put(OutputFields.URGENCY, properties.get("urgency"))
-          .put(OutputFields.SCALE, properties.get("scale"))
-          .put(OutputFields.NUM_ORDERS, properties.get("AddParcelEvent"))
-          .put(OutputFields.NUM_VEHICLES, properties.get("AddVehicleEvent"))
-          .put(OutputFields.RANDOM_SEED, sr.getSimArgs().getRandomSeed())
-          .put(OutputFields.REPETITION, sr.getSimArgs().getRepetition());
-
-      addSimOutputs(map, sr, objectiveFunction);
-
-      final String line =
-        appendValuesTo(new StringBuilder(), map.build(), getFields())
-          .append(System.lineSeparator())
-          .toString();
+      String line = appendTo(sr, new StringBuilder()).toString();
       Files.append(line, destFile, Charsets.UTF_8);
     } catch (final IOException e) {
       throw new IllegalStateException(e);
     }
+  }
+
+  Map<String, String> getScenarioProps(File f) {
+    if (scenarioPropsCache.containsKey(f)) {
+      return scenarioPropsCache.get(f);
+    }
+    try {
+      List<String> propsStrings = Files.readLines(f, Charsets.UTF_8);
+      final Map<String, String> properties = Splitter.on("\n")
+        .withKeyValueSeparator(" = ")
+        .split(Joiner.on("\n").join(propsStrings));
+      scenarioPropsCache.put(f, properties);
+      return properties;
+    } catch (IOException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
+  StringBuilder appendTo(SimulationResult sr, StringBuilder sb) {
+    final String pc = sr.getSimArgs().getScenario().getProblemClass().getId();
+    final String id = sr.getSimArgs().getScenario().getProblemInstanceId();
+
+    final String scenarioName = Joiner.on("-").join(pc, id);
+    File scenFile = new File(new StringBuilder().append(dataset).append("/")
+      .append(scenarioName).append(".properties").toString());
+    final Map<String, String> properties = getScenarioProps(scenFile);
+
+    final ImmutableMap.Builder<Enum<?>, Object> map =
+      ImmutableMap.<Enum<?>, Object>builder()
+        .put(OutputFields.SCENARIO_ID, scenarioName)
+        .put(OutputFields.DYNAMISM, properties.get("dynamism_bin"))
+        .put(OutputFields.URGENCY, properties.get("urgency"))
+        .put(OutputFields.SCALE, properties.get("scale"))
+        .put(OutputFields.NUM_ORDERS, properties.get("AddParcelEvent"))
+        .put(OutputFields.NUM_VEHICLES, properties.get("AddVehicleEvent"))
+        .put(OutputFields.RANDOM_SEED, sr.getSimArgs().getRandomSeed())
+        .put(OutputFields.REPETITION, sr.getSimArgs().getRepetition());
+
+    addSimOutputs(map, sr, objectiveFunction);
+
+    return appendValuesTo(sb, map.build(), getFields())
+      .append(System.lineSeparator());
   }
 
   @Override

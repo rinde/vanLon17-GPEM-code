@@ -194,6 +194,21 @@ public class StatsLogger extends GPStats {
     System.out.println("End of evolutionary run.");
     System.out.println(
       "Total runtime: " + PeriodFormat.getDefault().print(dur.toPeriod()));
+
+    File firstGenDir = new File(experimentDirectory, "/generation0");
+    File lastGenDir =
+      new File(experimentDirectory, "/generation" + state.generation);
+
+    while (lastGenDir.listFiles().length != firstGenDir.listFiles().length) {
+      System.out.println("Waiting for all results to be written to disk.");
+      try {
+        Thread.sleep(1000);
+      } catch (InterruptedException e) {
+        throw new IllegalStateException(e);
+      }
+    }
+    System.out.println("Done.");
+
   }
 
   static File createExperimentDir(File target) {

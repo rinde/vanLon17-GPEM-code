@@ -139,16 +139,18 @@ public class Evaluate {
       resDir.mkdirs();
     }
 
+    boolean evolution = scenarioConverter != null;
+
     ResultWriter rw = new VanLonHolvoetResultWriter(resDir, GPEM17.OBJ_FUNC,
       scenarioFiles.build().get().iterator().next().getParent().toString(),
-      realtime, true, createTmpFiles);
+      realtime, true, createTmpFiles, evolution);
     Experiment.Builder exp = Experiment.builder()
       .addScenarios(scenarioFiles)
       .showGui(GPEM17.gui())
       .showGui(false)
       .usePostProcessor(
-        new LogProcessor(GPEM17.OBJ_FUNC, scenarioConverter == null
-          ? FailureStrategy.RETRY : FailureStrategy.INCLUDE, false))
+        new LogProcessor(GPEM17.OBJ_FUNC, evolution
+          ? FailureStrategy.INCLUDE : FailureStrategy.RETRY, false))
       .computeLocal()
       .withRandomSeed(123)
       .repeat(3)

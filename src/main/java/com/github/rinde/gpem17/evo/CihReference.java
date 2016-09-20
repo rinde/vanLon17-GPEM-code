@@ -45,9 +45,9 @@ public class CihReference {
     Gendreau06ObjectiveFunction.instance(50d, .25, 1d, 1d);
 
   public static void main(String[] args) {
-    final int generations = 50;
+    final int generations = 2;
     final int numScensInGen = 50;
-    final int numScensInLastGen = 250;
+    final int numScensInLastGen = 20;
     int totalScens = ((generations - 1) * numScensInGen) + numScensInLastGen;
     final String regex = ".*0\\.50-20-1\\.00-.*\\.scen";
 

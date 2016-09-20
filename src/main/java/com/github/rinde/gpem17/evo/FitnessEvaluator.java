@@ -177,7 +177,9 @@ public class FitnessEvaluator extends BaseEvaluator {
     } else {
       toIndex = fromIndex + numScenariosPerGen;
     }
-    System.out.println(paths.subList(fromIndex, toIndex));
+    System.out.println(TRAINSET_PATH + " " +
+      paths.subList(fromIndex, toIndex).toString().replace(TRAINSET_PATH + "/",
+        ""));
 
     String[] args;
     if (distributed) {
