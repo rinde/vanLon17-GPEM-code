@@ -42,7 +42,7 @@ import com.github.rinde.rinsim.scenario.gendreau06.Gendreau06ObjectiveFunction;
 public class CihReference {
 
   static final Gendreau06ObjectiveFunction LESS_TT_OBJ_FUNC =
-    Gendreau06ObjectiveFunction.instance(50d, .5, 1d, 1d);
+    Gendreau06ObjectiveFunction.instance(50d, .25, 1d, 1d);
 
   public static void main(String[] args) {
     final int generations = 50;

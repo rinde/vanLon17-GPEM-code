@@ -109,25 +109,44 @@ abstract class ResultWriter implements ResultListener {
   @Override
   public void doneComputing(ExperimentResults results) {
     if (createFinalFiles) {
-      final Multimap<MASConfiguration, SimulationResult> groupedResults =
-        LinkedHashMultimap.create();
-      for (final SimulationResult sr : results.sortedResults()) {
-        groupedResults.put(sr.getSimArgs().getMasConfig(), sr);
+      new Thread(new FinalWriter(this, results)).start();
+    }
+  }
+
+  void writeFinal(ExperimentResults results) {
+    final Multimap<MASConfiguration, SimulationResult> groupedResults =
+      LinkedHashMultimap.create();
+    for (final SimulationResult sr : results.sortedResults()) {
+      groupedResults.put(sr.getSimArgs().getMasConfig(), sr);
+    }
+
+    for (final MASConfiguration config : groupedResults.keySet()) {
+      final Collection<SimulationResult> group = groupedResults.get(config);
+
+      final File configResult =
+        new File(experimentDirectory, config.getName() + "-final.csv");
+
+      // deletes the file in case it already exists
+      configResult.delete();
+      createCSVWithHeader(configResult);
+      for (final SimulationResult sr : group) {
+        appendSimResult(sr, configResult);
       }
+    }
+  }
 
-      for (final MASConfiguration config : groupedResults.keySet()) {
-        final Collection<SimulationResult> group = groupedResults.get(config);
+  static class FinalWriter implements Runnable {
+    private final ExperimentResults data;
+    private final ResultWriter instance;
 
-        final File configResult =
-          new File(experimentDirectory, config.getName() + "-final.csv");
+    FinalWriter(ResultWriter rw, ExperimentResults dt) {
+      instance = rw;
+      data = dt;
+    }
 
-        // deletes the file in case it already exists
-        configResult.delete();
-        createCSVWithHeader(configResult);
-        for (final SimulationResult sr : group) {
-          appendSimResult(sr, configResult);
-        }
-      }
+    @Override
+    public void run() {
+      instance.writeFinal(data);
     }
   }
 
