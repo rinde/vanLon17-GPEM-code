@@ -36,7 +36,6 @@ import com.github.rinde.ecj.GPComputationResult;
 import com.github.rinde.ecj.GPProgram;
 import com.github.rinde.ecj.GPProgramParser;
 import com.github.rinde.evo4mas.common.GpGlobal;
-import com.github.rinde.gpem17.GPEM17;
 import com.github.rinde.gpem17.GPEM17.ReauctOpt;
 import com.github.rinde.gpem17.eval.Evaluate;
 import com.github.rinde.gpem17.eval.RtExperimentInfo;
@@ -48,6 +47,7 @@ import com.github.rinde.rinsim.io.FileProvider;
 import com.github.rinde.rinsim.pdptw.common.StatisticsDTO;
 import com.github.rinde.rinsim.scenario.Scenario;
 import com.github.rinde.rinsim.scenario.StopConditions;
+import com.github.rinde.rinsim.scenario.gendreau06.Gendreau06ObjectiveFunction;
 import com.google.common.base.Function;
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.ImmutableList;
@@ -63,7 +63,7 @@ import ec.util.Parameter;
 public class FitnessEvaluator extends BaseEvaluator {
 
   enum Properties {
-    DISTRIBUTED, COMPOSITE_SIZE, NUM_SCENARIOS_PER_GEN, NUM_SCENARIOS_IN_LAST_GEN, REAUCT_OPT, USE_DIFFERENT_SCENARIOS_IN_EVERY_GENERATION, SCENARIOS_REGEX;
+    DISTRIBUTED, COMPOSITE_SIZE, NUM_SCENARIOS_PER_GEN, NUM_SCENARIOS_IN_LAST_GEN, REAUCT_OPT, USE_DIFFERENT_SCENARIOS_IN_EVERY_GENERATION, SCENARIOS_REGEX, OBJ_FUNC_WEIGHTS;
 
     public String toString() {
       return name().toLowerCase();
@@ -83,6 +83,7 @@ public class FitnessEvaluator extends BaseEvaluator {
   int numScenariosInLastGen;
   boolean useDifferentScenariosEveryGen;
   ReauctOpt reauctOpt;
+  Gendreau06ObjectiveFunction objectiveFunction;
 
   public FitnessEvaluator() {}
 
@@ -105,6 +106,21 @@ public class FitnessEvaluator extends BaseEvaluator {
         base.push(
           Properties.USE_DIFFERENT_SCENARIOS_IN_EVERY_GENERATION.toString()),
         null, true);
+
+    String objFuncWeights =
+      state.parameters.getString(
+        base.push(Properties.OBJ_FUNC_WEIGHTS.toString()), null);
+
+    checkArgument(objFuncWeights != null,
+      "%s is not set, expected value: 'tt-td-ot'.",
+      base.push(Properties.OBJ_FUNC_WEIGHTS.toString()));
+    String[] parts = objFuncWeights.split("-");
+    double tt = Double.parseDouble(parts[0]);
+    double td = Double.parseDouble(parts[1]);
+    double ot = Double.parseDouble(parts[2]);
+    System.out.println(
+      "Using objective function weights: tt:" + tt + " td:" + td + " ot:" + ot);
+    objectiveFunction = Gendreau06ObjectiveFunction.instance(50d, tt, td, ot);
 
     String ropt =
       state.parameters.getString(base.push(Properties.REAUCT_OPT.toString()),
@@ -209,7 +225,7 @@ public class FitnessEvaluator extends BaseEvaluator {
       Converter.INSTANCE,
       false,
       reauctOpt,
-      GPEM17.OBJ_FUNC, // use default obj func
+      objectiveFunction,
       args);
 
     Map<MASConfiguration, GPNodeHolder> configMapping = new LinkedHashMap<>();
@@ -225,9 +241,9 @@ public class FitnessEvaluator extends BaseEvaluator {
     for (SimulationResult sr : results.getResults()) {
       StatisticsDTO stats =
         ((RtExperimentInfo) sr.getResultObject()).getStats();
-      double cost = GPEM17.OBJ_FUNC.computeCost(stats);
+      double cost = objectiveFunction.computeCost(stats);
       float fitness = (float) cost;
-      if (!GPEM17.OBJ_FUNC.isValidResult(stats)) {
+      if (!objectiveFunction.isValidResult(stats)) {
         // if the simulation is terminated early, we give a huge penalty, which
         // we reduce based on how far the simulation actually got.
         fitness = Float.MAX_VALUE - stats.simulationTime;
@@ -235,7 +251,6 @@ public class FitnessEvaluator extends BaseEvaluator {
       String id = configMapping.get(sr.getSimArgs().getMasConfig()).string;
       convertedResults.add(SingleResult.create((float) fitness, id, sr));
     }
-
     processResults(state, mapping, convertedResults);
   }
 
