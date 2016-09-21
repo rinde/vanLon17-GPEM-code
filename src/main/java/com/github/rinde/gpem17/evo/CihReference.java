@@ -47,14 +47,14 @@ public class CihReference {
     Gendreau06ObjectiveFunction.instance(50d, .5, 1d, 1d);
 
   static final String DEFAULT_OBJ_FUNC_NM = "DEFAULT_OBJ_FUNC";
-  static final String LESS_TT_OBJ_FUNC_NM = "TT_1_2_OBJ_FUNC";
+  static final String TT_1_2_OBJ_FUNC = "TT_1_2_OBJ_FUNC";
 
   // 0 - scendir
   // 1 - regex
   // 2 - generations
   // 3 - scens in gen
   // 4 - scens in last gen
-  // 5 - normal obj func (DEFAULT_OBJ_FUNC), less tt obj func (LESS_TT_OBJ_FUNC)
+  // 5 - normal obj func (DEFAULT_OBJ_FUNC), less tt obj func (TT_1_2_OBJ_FUNC)
   public static void main(String[] args) {
     String scenDir = args[0];
     String regex = args[1];
@@ -66,7 +66,7 @@ public class CihReference {
     // final String regex = ".*0\\.50-20-1\\.00-.*\\.scen";
 
     checkArgument(args[5].equals(DEFAULT_OBJ_FUNC_NM)
-      || args[5].equals(LESS_TT_OBJ_FUNC_NM));
+      || args[5].equals(TT_1_2_OBJ_FUNC));
 
     boolean defaultObjFunc = args[5].equals(DEFAULT_OBJ_FUNC_NM);
 
