@@ -36,6 +36,7 @@ import com.github.rinde.ecj.GPComputationResult;
 import com.github.rinde.ecj.GPProgram;
 import com.github.rinde.ecj.GPProgramParser;
 import com.github.rinde.evo4mas.common.GpGlobal;
+import com.github.rinde.gpem17.GPEM17;
 import com.github.rinde.gpem17.GPEM17.ReauctOpt;
 import com.github.rinde.gpem17.eval.Evaluate;
 import com.github.rinde.gpem17.eval.RtExperimentInfo;
@@ -114,13 +115,7 @@ public class FitnessEvaluator extends BaseEvaluator {
     checkArgument(objFuncWeights != null,
       "%s is not set, expected value: 'tt-td-ot'.",
       base.push(Properties.OBJ_FUNC_WEIGHTS.toString()));
-    String[] parts = objFuncWeights.split("-");
-    double tt = Double.parseDouble(parts[0]);
-    double td = Double.parseDouble(parts[1]);
-    double ot = Double.parseDouble(parts[2]);
-    System.out.println(
-      "Using objective function weights: tt:" + tt + " td:" + td + " ot:" + ot);
-    objectiveFunction = Gendreau06ObjectiveFunction.instance(50d, tt, td, ot);
+    objectiveFunction = GPEM17.parseObjFuncWeights(objFuncWeights);
 
     String ropt =
       state.parameters.getString(base.push(Properties.REAUCT_OPT.toString()),

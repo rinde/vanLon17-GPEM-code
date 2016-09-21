@@ -150,4 +150,15 @@ public class GPEM17 {
     return createConfig(solver, rp, cm, false, name);
   }
 
+  public static Gendreau06ObjectiveFunction parseObjFuncWeights(
+      String objFuncWeights) {
+    String[] parts = objFuncWeights.split("-");
+    double tt = Double.parseDouble(parts[0]);
+    double td = Double.parseDouble(parts[1]);
+    double ot = Double.parseDouble(parts[2]);
+    System.out.println(
+      "Using objective function weights: tt:" + tt + " td:" + td + " ot:" + ot);
+    return Gendreau06ObjectiveFunction.instance(50d, tt, td, ot);
+  }
+
 }

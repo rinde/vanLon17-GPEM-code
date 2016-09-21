@@ -102,8 +102,14 @@ public class Evaluate {
       "The third argument should be 'EVO' or 'CIH', found '%s'.", args[2]);
     ReauctOpt reauctOpt = ReauctOpt.valueOf(args[2]);
 
-    final String[] expArgs = new String[args.length - 3];
-    System.arraycopy(args, 3, expArgs, 0, args.length - 3);
+    checkArgument(args.length >= 4,
+      "The third argument should be the objective function weights: "
+        + "'tt-td-ot'.");
+    Gendreau06ObjectiveFunction objectiveFunction =
+      GPEM17.parseObjFuncWeights(args[3]);
+
+    final String[] expArgs = new String[args.length - 4];
+    System.arraycopy(args, 4, expArgs, 0, args.length - 4);
     File resDir =
       realtime ? new File(RT_RESULTS_DIR) : new File(ST_RESULTS_DIR);
 
@@ -114,7 +120,7 @@ public class Evaluate {
     Function<Scenario, Scenario> conv =
       realtime ? null : ScenarioConverter.TO_ONLINE_SIMULATED_250;
     execute(programs, realtime, files, resDir, true, conv, true, reauctOpt,
-      GPEM17.OBJ_FUNC, expArgs);
+      objectiveFunction, expArgs);
 
   }
 
