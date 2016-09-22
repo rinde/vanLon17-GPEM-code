@@ -64,14 +64,14 @@ import ec.util.Parameter;
 public class FitnessEvaluator extends BaseEvaluator {
 
   enum Properties {
-    DISTRIBUTED, COMPOSITE_SIZE, NUM_SCENARIOS_PER_GEN, NUM_SCENARIOS_IN_LAST_GEN, REAUCT_OPT, USE_DIFFERENT_SCENARIOS_IN_EVERY_GENERATION, SCENARIOS_REGEX, OBJ_FUNC_WEIGHTS;
+    DISTRIBUTED, COMPOSITE_SIZE, NUM_SCENARIOS_PER_GEN, NUM_SCENARIOS_IN_LAST_GEN, REAUCT_OPT, USE_DIFFERENT_SCENARIOS_IN_EVERY_GENERATION, SCENARIOS_REGEX, SCENARIOS_DIR, OBJ_FUNC_WEIGHTS;
 
     public String toString() {
       return name().toLowerCase();
     }
   }
 
-  private static final String TRAINSET_PATH = "files/dataset10k";
+  // private static final String TRAINSET_PATH = "files/dataset10k";
   static final long MAX_SIM_TIME = 8 * 60 * 60 * 1000L;
 
   static final Pattern CAPTURE_SCENARIO_NAME_PARTS =
@@ -85,6 +85,7 @@ public class FitnessEvaluator extends BaseEvaluator {
   boolean useDifferentScenariosEveryGen;
   ReauctOpt reauctOpt;
   Gendreau06ObjectiveFunction objectiveFunction;
+  String scenariosDir;
 
   public FitnessEvaluator() {}
 
@@ -129,7 +130,18 @@ public class FitnessEvaluator extends BaseEvaluator {
     String regex = state.parameters.getString(
       base.push(Properties.SCENARIOS_REGEX.toString()), null);
 
-    paths = getScenarioPaths(TRAINSET_PATH, regex);
+    scenariosDir = state.parameters.getString(
+      base.push(Properties.SCENARIOS_DIR.toString()), null);
+
+    checkArgument(scenariosDir != null,
+      "%s is not defined, it should contain the path to a dataset.",
+      base.push(Properties.SCENARIOS_DIR.toString()));
+
+    File f = new File(scenariosDir);
+    checkArgument(f.exists() && f.isDirectory(),
+      "The path '%s' does not exist or is not a directory.", f);
+
+    paths = getScenarioPaths(scenariosDir, regex);
   }
 
   public static ImmutableList<Path> getScenarioPaths(String dir, String regex) {
@@ -188,8 +200,8 @@ public class FitnessEvaluator extends BaseEvaluator {
     } else {
       toIndex = fromIndex + numScenariosPerGen;
     }
-    System.out.println(TRAINSET_PATH + " " +
-      paths.subList(fromIndex, toIndex).toString().replace(TRAINSET_PATH + "/",
+    System.out.println(scenariosDir + " " +
+      paths.subList(fromIndex, toIndex).toString().replace(scenariosDir + "/",
         ""));
 
     String[] args;

@@ -9,15 +9,17 @@ seed.0 = 123
 pop.subpop.0.size 	= 500
 generations 		= 100
 
-eval.distributed = true
+eval.distributed = false
 eval.composite_size = 25
-eval.num_scenarios_per_gen = 50
-eval.num_scenarios_in_last_gen = 250
+eval.num_scenarios_per_gen = 54
+eval.num_scenarios_in_last_gen = 270
 eval.use_different_scenarios_in_every_generation = true
 eval.reauct_opt = EVO
-eval.scenarios_regex = .*0\.50-20-1\.00-\\d*\.scen
+eval.scenarios_regex = .*-1\.00-\\d*\.scen
+eval.scenarios_dir = files/dataset10k
+# .*0\.50-20-1\.00-\\d*\.scen
 #tt-td-ot
-eval.obj_func_weights = .5-1-1
+eval.obj_func_weights = 1-1-1
 
 breed.elite.0 = 10
 breed.reevaluate-elites.0 = true
