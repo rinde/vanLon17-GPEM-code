@@ -1,0 +1,27 @@
+<solver>
+	<constructionHeuristic>
+		<constructionHeuristicType>FIRST_FIT_DECREASING</constructionHeuristicType>
+	</constructionHeuristic>
+	<localSearch>
+		<unionMoveSelector>
+			<moveIteratorFactory>
+				<moveIteratorFactoryClass>com.github.rinde.logistics.pdptw.solver.optaplanner.SwapMoveIteratorFactory</moveIteratorFactoryClass>
+			</moveIteratorFactory>
+			<changeMoveSelector>
+				<entitySelector>
+					<filterClass>com.github.rinde.logistics.pdptw.solver.optaplanner.EntityFilter</filterClass>
+				</entitySelector>
+			</changeMoveSelector>
+		</unionMoveSelector>
+	</localSearch>
+	<localSearch>
+		<acceptor>
+			<stepCountingHillClimbingSize>400</stepCountingHillClimbingSize>
+			<entityTabuRatio>0.02</entityTabuRatio>
+		</acceptor>
+		<forager>
+			<acceptedCountLimit>1</acceptedCountLimit>
+			<finalistPodiumType>STRATEGIC_OSCILLATION</finalistPodiumType>
+		</forager>
+	</localSearch>
+</solver>

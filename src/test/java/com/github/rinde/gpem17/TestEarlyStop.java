@@ -74,7 +74,7 @@ public class TestEarlyStop {
 
     File parent = new File("files/test/results");
     Evaluate.execute(progs, false, files, parent, true, Converter.INSTANCE,
-      false, ReauctOpt.EVO, GPEM17.OBJ_FUNC,
+      false, ReauctOpt.EVO, GPEM17.OBJ_FUNC, null,
       "-g", "true", "-t", "1", "--repetitions", "1");
 
   }

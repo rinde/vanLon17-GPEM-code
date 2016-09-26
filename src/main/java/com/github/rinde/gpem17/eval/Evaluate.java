@@ -38,6 +38,7 @@ import com.github.rinde.ecj.GPProgramParser;
 import com.github.rinde.evo4mas.common.GpGlobal;
 import com.github.rinde.gpem17.GPEM17;
 import com.github.rinde.gpem17.GPEM17.ReauctOpt;
+import com.github.rinde.gpem17.GPEM17.RpOpt;
 import com.github.rinde.gpem17.evo.FunctionSet;
 import com.github.rinde.rinsim.core.model.time.TimeModel;
 import com.github.rinde.rinsim.experiment.CommandLineProgress;
@@ -103,13 +104,25 @@ public class Evaluate {
     ReauctOpt reauctOpt = ReauctOpt.valueOf(args[2]);
 
     checkArgument(args.length >= 4,
-      "The third argument should be the objective function weights: "
+      "The fourth argument should be the objective function weights: "
         + "'tt-td-ot'.");
     Gendreau06ObjectiveFunction objectiveFunction =
       GPEM17.parseObjFuncWeights(args[3]);
 
-    final String[] expArgs = new String[args.length - 4];
-    System.arraycopy(args, 4, expArgs, 0, args.length - 4);
+    checkArgument(args.length >= 5
+      && (args[4].equals("OptaPlanner") || args[4].equals("CIH")),
+      "The fifth argument should be 'CIH' or 'OptaPlanner', found '%s'.",
+      args[4]);
+
+    RpOpt rpOpt;
+    if (args[4].equals("OptaPlanner")) {
+      rpOpt = RpOpt.OPTA_PLANNER;
+    } else {
+      rpOpt = RpOpt.CIH;
+    }
+
+    final String[] expArgs = new String[args.length - 5];
+    System.arraycopy(args, 5, expArgs, 0, args.length - 5);
     File resDir =
       realtime ? new File(RT_RESULTS_DIR) : new File(ST_RESULTS_DIR);
 
@@ -120,7 +133,7 @@ public class Evaluate {
     Function<Scenario, Scenario> conv =
       realtime ? null : ScenarioConverter.TO_ONLINE_SIMULATED_250;
     execute(programs, realtime, files, resDir, true, conv, true, reauctOpt,
-      objectiveFunction, expArgs);
+      objectiveFunction, rpOpt, expArgs);
 
   }
 
@@ -135,6 +148,7 @@ public class Evaluate {
       boolean createTmpFiles,
       ReauctOpt reauctOpt,
       Gendreau06ObjectiveFunction objFuncUsedAtRuntime,
+      RpOpt routePlanner,
       String... expArgs) {
     checkArgument(realtime ^ scenarioConverter != null);
     final long startTime = System.currentTimeMillis();
@@ -197,7 +211,8 @@ public class Evaluate {
 
       if (realtime) {
         exp.addConfiguration(
-          GPEM17.createRtConfig(prog, progId, reauctOpt, objFuncUsedAtRuntime));
+          GPEM17.createRtConfig(prog, progId, reauctOpt, objFuncUsedAtRuntime,
+            routePlanner));
       } else {
         exp.addConfiguration(
           GPEM17.createStConfig(prog, progId, reauctOpt, objFuncUsedAtRuntime));

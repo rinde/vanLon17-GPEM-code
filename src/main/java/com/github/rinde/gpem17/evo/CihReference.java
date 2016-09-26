@@ -91,6 +91,7 @@ public class CihReference {
       false,
       ReauctOpt.CIH,
       defaultObjFunc ? GPEM17.OBJ_FUNC : LESS_TT_OBJ_FUNC,
+      null,
       new String[] {"--repetitions", "1"});
 
     File statsLog = new File(resDir, "best-stats.csv");

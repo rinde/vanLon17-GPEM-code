@@ -27,6 +27,7 @@ import com.github.rinde.logistics.pdptw.mas.comm.DoubleBid;
 import com.github.rinde.logistics.pdptw.mas.route.RoutePlanner;
 import com.github.rinde.logistics.pdptw.mas.route.RtSolverRoutePlanner;
 import com.github.rinde.logistics.pdptw.solver.CheapestInsertionHeuristic;
+import com.github.rinde.logistics.pdptw.solver.optaplanner.OptaplannerSolvers;
 import com.github.rinde.rinsim.central.SolverModel;
 import com.github.rinde.rinsim.central.rt.RtSolverModel;
 import com.github.rinde.rinsim.central.rt.RtStAdapters;
@@ -109,15 +110,40 @@ public class GPEM17 {
     CIH, EVO;
   }
 
+  public enum RpOpt {
+    CIH {
+      StochasticSupplier<RoutePlanner> create() {
+        return RtSolverRoutePlanner.supplier(RtStAdapters.toRealtime(
+          CheapestInsertionHeuristic.supplier(GPEM17.OBJ_FUNC)));
+      }
+    },
+
+    OPTA_PLANNER {
+      StochasticSupplier<RoutePlanner> create() {
+        final long rpMs = 2500L;
+        final String masSolverName =
+          "Step-counting-hill-climbing-with-entity-tabu-and-strategic-oscillation";
+        return RtSolverRoutePlanner.supplier(
+          OptaplannerSolvers.builder()
+            .withSolverXmlResource(
+              "com/github/rinde/jaamas16/jaamas-solver.xml")
+            .withObjectiveFunction(GPEM17.OBJ_FUNC)
+            .withName(masSolverName)
+            .withUnimprovedMsLimit(rpMs)
+            .buildRealtimeSolverSupplier());
+      }
+    };
+
+    abstract StochasticSupplier<RoutePlanner> create();
+
+  }
+
   public static MASConfiguration createRtConfig(
       PriorityHeuristic<GpGlobal> solver,
       String id,
       ReauctOpt reauctOpt,
-      Gendreau06ObjectiveFunction objFunc) {
-    StochasticSupplier<RoutePlanner> rp =
-      RtSolverRoutePlanner.supplier(
-        RtStAdapters
-          .toRealtime(CheapestInsertionHeuristic.supplier(objFunc)));
+      Gendreau06ObjectiveFunction objFunc,
+      RpOpt rpOpt) {
 
     EvoBidder.Builder cm = EvoBidder.realtimeBuilder(solver, objFunc)
       .withReauctionCooldownPeriod(60000);
@@ -127,8 +153,9 @@ public class GPEM17 {
     } else {
       cm = cm.withPriorityHeuristicForReauction();
     }
-    String name = "RTMAS-RP-CIH-BID-EVO-REAUCT-" + reauctOpt + "-" + id;
-    return createConfig(solver, rp, cm, true, name);
+    String name =
+      "RTMAS-RP-" + rpOpt.name() + "-BID-EVO-REAUCT-" + reauctOpt + "-" + id;
+    return createConfig(solver, rpOpt.create(), cm, true, name);
   }
 
   public static MASConfiguration createStConfig(
