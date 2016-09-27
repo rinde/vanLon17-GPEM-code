@@ -4,8 +4,8 @@ eval = com.github.rinde.gpem17.evo.FitnessEvaluator
 gp.fs.0 = com.github.rinde.gpem17.evo.FunctionSet
 stat = com.github.rinde.gpem17.evo.StatsLogger
 
-pop.subpop.0.size 	= 5
-generations 		= 2
+pop.subpop.0.size 	= 500
+generations 		= 100
 
 eval.distributed = false
 eval.composite_size = 25
