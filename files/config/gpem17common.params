@@ -7,7 +7,7 @@ stat = com.github.rinde.gpem17.evo.StatsLogger
 pop.subpop.0.size 	= 500
 generations 		= 100
 
-eval.distributed = false
+eval.distributed = true
 eval.composite_size = 25
 eval.use_different_scenarios_in_every_generation = true
 eval.reauct_opt = EVO
