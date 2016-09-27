@@ -181,9 +181,11 @@ public class Evaluate {
         SimulationProperty.SCENARIO,
         SimulationProperty.CONFIG)
 
-      .addResultListener(rw)
-      .addResultListener(new SimRuntimeLogger(resDir));
+      .addResultListener(rw);
 
+    if (!realtime) {
+      exp.addResultListener(new SimRuntimeLogger(resDir));
+    }
     if (realtime) {
       exp.setScenarioReader(
         ScenarioIO.readerAdapter(ScenarioConverter.TO_ONLINE_REALTIME_250))
