@@ -110,7 +110,7 @@ public class StatsLogger extends GPStats {
 
     try {
       dest.mkdirs();
-      FileUtils.copyDirectory(new File(fileName).getParentFile(), dest);
+      FileUtils.copyDirectory(new File("files/config"), dest);
     } catch (IOException e) {
       throw new IllegalStateException(e);
     }
