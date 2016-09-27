@@ -4,20 +4,16 @@ eval = com.github.rinde.gpem17.evo.FitnessEvaluator
 gp.fs.0 = com.github.rinde.gpem17.evo.FunctionSet
 stat = com.github.rinde.gpem17.evo.StatsLogger
 
-seed.0 = 123
-
 pop.subpop.0.size 	= 5
-generations 		= 3
+generations 		= 2
 
 eval.distributed = false
 eval.composite_size = 25
-eval.num_scenarios_per_gen = 1
-eval.num_scenarios_in_last_gen = 2
 eval.use_different_scenarios_in_every_generation = true
 eval.reauct_opt = EVO
-eval.scenarios_regex = .*-1\\.00-\\d*\\.scen
+
 eval.scenarios_dir = files/dataset10k
-#eval.scenarios_regex = .*0\\.50-20-1\\.00-\\d*\\.scen
+
 #tt-td-ot
 eval.obj_func_weights = 1-1-1
 

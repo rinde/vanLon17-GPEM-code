@@ -44,6 +44,7 @@ import com.github.rinde.rinsim.ui.renderers.PDPModelRenderer;
 import com.github.rinde.rinsim.ui.renderers.PlaneRoadModelRenderer;
 import com.github.rinde.rinsim.ui.renderers.RoadUserRenderer;
 import com.github.rinde.rinsim.util.StochasticSupplier;
+import com.google.common.collect.ImmutableMap;
 
 /**
  * 
@@ -53,6 +54,13 @@ public class GPEM17 {
 
   public static final Gendreau06ObjectiveFunction OBJ_FUNC =
     Gendreau06ObjectiveFunction.instance(50d);
+
+  public static final ImmutableMap<String, String> EXPECTED_REGEXES =
+    ImmutableMap.of(
+      ".*0\\.50-20-1\\.00-\\d*\\.scen", "50-20-1",
+      ".*0\\.80-5-1\\.00-\\d*\\.scen", "80-5-1",
+      ".*0\\.20-35-1\\.00-\\d*\\.scen", "20-35-1",
+      ".*-1\\.00-\\d*\\.scen", "mixed");
 
   public static View.Builder gui() {
     return View.builder()

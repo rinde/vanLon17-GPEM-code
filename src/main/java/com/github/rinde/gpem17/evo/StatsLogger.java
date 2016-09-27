@@ -35,12 +35,14 @@ import com.github.rinde.ecj.GPStats;
 import com.github.rinde.gpem17.AuctionStats;
 import com.github.rinde.gpem17.GPEM17;
 import com.github.rinde.gpem17.eval.RtExperimentInfo;
+import com.github.rinde.gpem17.evo.FitnessEvaluator.Properties;
 import com.github.rinde.rinsim.experiment.Experiment.SimulationResult;
 import com.github.rinde.rinsim.pdptw.common.StatisticsDTO;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Files;
+import com.google.common.primitives.Ints;
 
 import ec.EvolutionState;
 import ec.Individual;
@@ -54,17 +56,12 @@ public class StatsLogger extends GPStats {
   static final String RESULTS_MAIN_DIR = "files/results/evo/";
   static final Joiner DASH_JOINER = Joiner.on("-");
   static final Joiner COMMA_JOINER = Joiner.on(",");
-  final File experimentDirectory;
-  final File statsLog;
+  File experimentDirectory;
+  File statsLog;
   final long startTime;
 
   public StatsLogger() {
-    experimentDirectory = createExperimentDir(new File(RESULTS_MAIN_DIR));
-    statsLog = new File(experimentDirectory, "best-stats.csv");
     startTime = System.nanoTime();
-
-    // create best-stats.csv with header
-    createHeader(statsLog);
   }
 
   static void createHeader(File dest) {
@@ -81,6 +78,25 @@ public class StatsLogger extends GPStats {
   }
 
   public void setup(final EvolutionState state, final Parameter base) {
+    String seed = state.parameters.getString(new Parameter("seed.0"), null);
+    System.out.println("master seed: " + seed);
+    checkArgument(seed != null && Ints.tryParse(seed) != null,
+      "seed.0 must be defined");
+
+    String regex = state.parameters.getString(
+      new Parameter("eval").push(Properties.SCENARIOS_REGEX.toString()), null);
+
+    checkArgument(GPEM17.EXPECTED_REGEXES.containsKey(regex),
+      "Unexpected regex: %s, expected one of %s.",
+      regex, GPEM17.EXPECTED_REGEXES);
+
+    String name = "-" + GPEM17.EXPECTED_REGEXES.get(regex) + "-s" + seed;
+
+    experimentDirectory = createExperimentDir(new File(RESULTS_MAIN_DIR), name);
+    statsLog = new File(experimentDirectory, "best-stats.csv");
+
+    // create best-stats.csv with header
+    createHeader(statsLog);
 
     String fileName = null;
     for (int i = 0; i < state.runtimeArguments.length; i++) {
@@ -211,10 +227,10 @@ public class StatsLogger extends GPStats {
 
   }
 
-  static File createExperimentDir(File target) {
+  static File createExperimentDir(File target, String nameExt) {
     final String timestamp = ISODateTimeFormat.dateHourMinuteSecond()
       .print(System.currentTimeMillis()).replace(":", "");
-    final File experimentDirectory = new File(target, timestamp);
+    final File experimentDirectory = new File(target, timestamp + nameExt);
     experimentDirectory.mkdirs();
 
     final Path latest = Paths.get(target.getAbsolutePath(), "latest/");
