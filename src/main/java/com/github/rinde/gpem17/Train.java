@@ -18,6 +18,8 @@ package com.github.rinde.gpem17;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Comparator;
 
 import org.apache.commons.io.FileUtils;
 
@@ -47,6 +49,14 @@ public class Train {
               return name.endsWith(".params");
             }
           });
+
+          Arrays.sort(paramFiles, new Comparator<File>() {
+            @Override
+            public int compare(File o1, File o2) {
+              return o1.getName().compareTo(o2.getName());
+            }
+          });
+
           for (File paramFile : paramFiles) {
             run(paramFile.getPath());
           }
