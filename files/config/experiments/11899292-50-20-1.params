@@ -1,6 +1,0 @@
-parent.0 = ../gpem17common.params
-
-seed.0 = 11899292
-eval.num_scenarios_per_gen = 50
-eval.num_scenarios_in_last_gen = 250
-eval.scenarios_regex = .*0\\.50-20-1\\.00-\\d*\\.scen

@@ -70,7 +70,7 @@ public class GPEM17 {
       .withResolution(1280, 768)
       .with(PlaneRoadModelRenderer.builder())
       .with(PDPModelRenderer.builder())
-      .with(RoadUserRenderer.builder().withToStringLabel())
+      .with(RoadUserRenderer.builder())// .withToStringLabel())
       .with(AuctionPanel.builder())
       .with(RoutePanel.builder())
       .with(RouteRenderer.builder())
