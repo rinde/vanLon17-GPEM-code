@@ -195,9 +195,12 @@ public class FitnessEvaluator extends BaseEvaluator {
       fromIndex = 0;
     }
     int toIndex;
+    int compSize;
     if (state.generation == state.numGenerations - 1) {
+      compSize = compositeSize * 5;
       toIndex = fromIndex + numScenariosInLastGen;
     } else {
+      compSize = compositeSize;
       toIndex = fromIndex + numScenariosPerGen;
     }
     System.out.println(scenariosDir + " " +
@@ -206,8 +209,9 @@ public class FitnessEvaluator extends BaseEvaluator {
 
     String[] args;
     if (distributed) {
+
       args = new String[] {"--jppf", "--repetitions", "1", "--composite-size",
-        Integer.toString(compositeSize)};
+        Integer.toString(compSize)};
     } else {
       args = new String[] {"--repetitions", "1"};
     }
