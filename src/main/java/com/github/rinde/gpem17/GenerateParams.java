@@ -39,6 +39,8 @@ public class GenerateParams {
    */
   public static void main(String[] args) throws IOException {
 
+    generateTuningExperiments();
+
     for (long seed : SEEDS) {
       for (Map.Entry<String, String> regexEntry : GPEM17.EXPECTED_REGEXES
         .entrySet()) {
@@ -79,6 +81,31 @@ public class GenerateParams {
       }
     }
 
+  }
+
+  static void generateTuningExperiments() throws IOException {
+    // #tt-td-ot
+    for (String weights : ImmutableList.of("1-1-1", ".5-1-1")) {
+      // seeds obtained from random.org
+      for (long seed : ImmutableList.of(91404445L, 56862982L, 76980253L)) {
+        StringBuilder sb =
+          new StringBuilder("parent.0 = ../gpem17tuning-common.params");
+        sb.append(System.lineSeparator())
+          .append(System.lineSeparator())
+          .append("seed.0 = ")
+          .append(seed)
+          .append(System.lineSeparator())
+          .append("eval.obj_func_weights = ")
+          .append(weights)
+          .append(System.lineSeparator());
+
+        File dir = new File("files/config/tuning-experiments");
+        dir.mkdir();
+
+        File f = new File(dir, seed + "-" + weights + ".params");
+        Files.write(sb.toString(), f, Charsets.UTF_8);
+      }
+    }
   }
 
 }
