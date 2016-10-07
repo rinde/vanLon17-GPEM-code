@@ -15,7 +15,6 @@
  */
 package com.github.rinde.gpem17.evo;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Arrays.asList;
 
@@ -43,11 +42,14 @@ import com.github.rinde.rinsim.scenario.gendreau06.Gendreau06ObjectiveFunction;
  */
 public class CihReference {
 
-  static final Gendreau06ObjectiveFunction LESS_TT_OBJ_FUNC =
+  static final Gendreau06ObjectiveFunction TT_1_2_OBJ_FUNC =
     Gendreau06ObjectiveFunction.instance(50d, .5, 1d, 1d);
+  static final Gendreau06ObjectiveFunction TT_1_4_OBJ_FUNC =
+    Gendreau06ObjectiveFunction.instance(50d, .25, 1d, 1d);
 
   static final String DEFAULT_OBJ_FUNC_NM = "DEFAULT_OBJ_FUNC";
-  static final String TT_1_2_OBJ_FUNC = "TT_1_2_OBJ_FUNC";
+  static final String TT_1_2_OBJ_FUNC_NM = "TT_1_2_OBJ_FUNC";
+  static final String TT_1_4_OBJ_FUNC_NM = "TT_1_4_OBJ_FUNC";
 
   // 0 - scendir
   // 1 - regex
@@ -65,10 +67,20 @@ public class CihReference {
     int totalScens = ((generations - 1) * numScensInGen) + numScensInLastGen;
     // final String regex = ".*0\\.50-20-1\\.00-.*\\.scen";
 
-    checkArgument(args[5].equals(DEFAULT_OBJ_FUNC_NM)
-      || args[5].equals(TT_1_2_OBJ_FUNC));
-
-    boolean defaultObjFunc = args[5].equals(DEFAULT_OBJ_FUNC_NM);
+    Gendreau06ObjectiveFunction objFunc;
+    switch (args[5]) {
+    case DEFAULT_OBJ_FUNC_NM:
+      objFunc = GPEM17.OBJ_FUNC;
+      break;
+    case TT_1_2_OBJ_FUNC_NM:
+      objFunc = TT_1_2_OBJ_FUNC;
+      break;
+    case TT_1_4_OBJ_FUNC_NM:
+      objFunc = TT_1_4_OBJ_FUNC;
+      break;
+    default:
+      throw new IllegalArgumentException();
+    }
 
     GPProgram<GpGlobal> prog =
       GPProgramParser.parseProgramFunc("(insertioncost)",
@@ -90,7 +102,7 @@ public class CihReference {
       FitnessEvaluator.Converter.INSTANCE,
       false,
       ReauctOpt.CIH,
-      defaultObjFunc ? GPEM17.OBJ_FUNC : LESS_TT_OBJ_FUNC,
+      objFunc,
       null,
       new String[] {"--repetitions", "1"});
 
