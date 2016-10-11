@@ -274,8 +274,7 @@ public class Evaluate {
         return Scenario.builder(s)
           .removeModelsOfType(TimeModel.AbstractBuilder.class)
           .addModel(TimeModel.builder().withTickLength(250).withRealTime())
-          .setStopCondition(StopConditions.or(s.getStopCondition(),
-            StopConditions.limitedTime(10 * 60 * 60 * 1000)))
+          .setStopCondition(s.getStopCondition())
           .build();
       }
     },
