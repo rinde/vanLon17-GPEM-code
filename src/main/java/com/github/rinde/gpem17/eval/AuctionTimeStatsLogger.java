@@ -106,7 +106,6 @@ public class AuctionTimeStatsLogger extends AbstractModel<Bidder<DoubleBid>> {
 
   @Override
   public boolean register(Bidder<DoubleBid> element) {
-    System.out.println(element);
     bidders.add(element);
     return true;
   }
@@ -115,5 +114,4 @@ public class AuctionTimeStatsLogger extends AbstractModel<Bidder<DoubleBid>> {
   public boolean unregister(Bidder<DoubleBid> element) {
     return false;
   }
-
 }
