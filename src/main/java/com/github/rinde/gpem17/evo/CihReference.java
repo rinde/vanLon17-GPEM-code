@@ -104,6 +104,8 @@ public class CihReference {
       ReauctOpt.CIH,
       objFunc,
       null,
+      false,
+      false,
       new String[] {"--repetitions", "1"});
 
     File statsLog = new File(resDir, "best-stats.csv");

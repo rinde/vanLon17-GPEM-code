@@ -24,12 +24,19 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.github.rinde.logistics.pdptw.mas.comm.AuctionCommModel.AuctionEvent;
+import com.github.rinde.logistics.pdptw.mas.comm.Bidder;
+import com.github.rinde.rinsim.central.GlobalStateObjects;
+import com.github.rinde.rinsim.central.Solvers.SolverTimeMeasurement;
+import com.github.rinde.rinsim.experiment.Experiment.SimArgs;
 import com.github.rinde.rinsim.experiment.Experiment.SimulationResult;
+import com.github.rinde.rinsim.scenario.Scenario;
 import com.github.rinde.rinsim.scenario.gendreau06.Gendreau06ObjectiveFunction;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Files;
 
@@ -67,6 +74,80 @@ public class VanLonHolvoetResultWriter extends ResultWriter {
       if (realtime) {
         writeTimeLog(result);
       }
+      writeBidComputationTimeMeasurements(result);
+    }
+  }
+
+  void writeBidComputationTimeMeasurements(SimulationResult result) {
+    if (!(result.getResultObject() instanceof RtExperimentInfo)) {
+      return;
+    }
+    final RtExperimentInfo info = (RtExperimentInfo) result.getResultObject();
+
+    System.out.println(info.getAuctionEvents().isEmpty() + " " +
+      info.getTimeMeasurements().isEmpty());
+    if (!info.getAuctionEvents().isEmpty()
+      && !info.getTimeMeasurements().isEmpty()) {
+
+      final SimArgs simArgs = result.getSimArgs();
+      final Scenario scenario = simArgs.getScenario();
+
+      final String id = Joiner.on("-").join(
+        simArgs.getMasConfig().getName(),
+        scenario.getProblemClass().getId(),
+        scenario.getProblemInstanceId(),
+        simArgs.getRandomSeed(),
+        simArgs.getRepetition());
+
+      File statsDir = new File(experimentDirectory, "computation-time-stats");
+      statsDir.mkdirs();
+
+      final File auctionsFile = new File(statsDir, id + "-auctions.csv");
+      final File compFile = new File(statsDir, id + "-bid-computations.csv");
+
+      StringBuilder auctionContents = new StringBuilder();
+      auctionContents.append("auction_start,auction_end,num_bids")
+        .append(System.lineSeparator());
+      for (AuctionEvent e : info.getAuctionEvents()) {
+        Joiner.on(",").appendTo(auctionContents,
+          e.getAuctionStartTime(),
+          e.getTime(),
+          e.getNumBids());
+        auctionContents.append(System.lineSeparator());
+      }
+
+      ImmutableListMultimap<Bidder<?>, SolverTimeMeasurement> measurements =
+        info.getTimeMeasurements();
+      StringBuilder compContents = new StringBuilder();
+      compContents
+        .append("bidder_id,comp_start_sim_time,route_length,duration_ns")
+        .append(System.lineSeparator());
+      int bidderId = 0;
+      for (Bidder<?> bidder : measurements.keySet()) {
+        List<SolverTimeMeasurement> ms = measurements.get(bidder);
+        for (SolverTimeMeasurement m : ms) {
+
+          int available = m.input().getAvailableParcels().size();
+          int total = GlobalStateObjects.allParcels(m.input()).size();
+          int pickedUp = total - available;
+          int routeLength = (available * 2) + pickedUp;
+
+          Joiner.on(",").appendTo(compContents,
+            bidderId,
+            m.input().getTime(),
+            routeLength,
+            m.durationNs());
+          compContents.append(System.lineSeparator());
+        }
+        bidderId++;
+      }
+      try {
+        Files.write(auctionContents, auctionsFile, Charsets.UTF_8);
+        Files.write(compContents, compFile, Charsets.UTF_8);
+      } catch (IOException e1) {
+        throw new IllegalStateException(e1);
+      }
+
     }
   }
 

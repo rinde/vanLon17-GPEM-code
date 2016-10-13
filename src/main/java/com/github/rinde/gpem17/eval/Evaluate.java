@@ -40,13 +40,27 @@ import com.github.rinde.gpem17.GPEM17;
 import com.github.rinde.gpem17.GPEM17.ReauctOpt;
 import com.github.rinde.gpem17.GPEM17.RpOpt;
 import com.github.rinde.gpem17.evo.FunctionSet;
+import com.github.rinde.logistics.pdptw.mas.TruckFactory.DefaultTruckFactory;
+import com.github.rinde.logistics.pdptw.mas.comm.AuctionCommModel;
+import com.github.rinde.logistics.pdptw.mas.comm.AuctionStopConditions;
+import com.github.rinde.logistics.pdptw.mas.comm.DoubleBid;
+import com.github.rinde.logistics.pdptw.mas.comm.RtSolverBidder;
+import com.github.rinde.logistics.pdptw.mas.comm.RtSolverBidder.BidFunction;
+import com.github.rinde.logistics.pdptw.mas.comm.RtSolverBidder.BidFunctions;
+import com.github.rinde.logistics.pdptw.mas.route.RtSolverRoutePlanner;
+import com.github.rinde.logistics.pdptw.solver.optaplanner.OptaplannerSolvers;
+import com.github.rinde.rinsim.central.rt.RtSolverModel;
+import com.github.rinde.rinsim.core.model.time.RealtimeClockLogger;
 import com.github.rinde.rinsim.core.model.time.TimeModel;
 import com.github.rinde.rinsim.experiment.CommandLineProgress;
 import com.github.rinde.rinsim.experiment.Experiment;
 import com.github.rinde.rinsim.experiment.ExperimentResults;
+import com.github.rinde.rinsim.experiment.MASConfiguration;
 import com.github.rinde.rinsim.experiment.PostProcessor.FailureStrategy;
 import com.github.rinde.rinsim.experiment.SimulationProperty;
 import com.github.rinde.rinsim.io.FileProvider;
+import com.github.rinde.rinsim.pdptw.common.AddVehicleEvent;
+import com.github.rinde.rinsim.pdptw.common.RouteFollowingVehicle;
 import com.github.rinde.rinsim.scenario.Scenario;
 import com.github.rinde.rinsim.scenario.ScenarioIO;
 import com.github.rinde.rinsim.scenario.StopConditions;
@@ -121,8 +135,17 @@ public class Evaluate {
       rpOpt = RpOpt.CIH;
     }
 
-    final String[] expArgs = new String[args.length - 5];
-    System.arraycopy(args, 5, expArgs, 0, args.length - 5);
+    checkArgument(args.length >= 6
+      && (args[5].equals("EnableTimeMeasurements")
+        || args[5].equals("DisableTimeMeasurements")),
+      "The fifth argument should be 'EnableTimeMeasurements' or "
+        + "'DisableTimeMeasurements', found '%s'.",
+      args[5]);
+
+    boolean enableTimeMeasurements = args[5].equals("EnableTimeMeasurements");
+
+    final String[] expArgs = new String[args.length - 6];
+    System.arraycopy(args, 6, expArgs, 0, args.length - 6);
     File resDir =
       realtime ? new File(RT_RESULTS_DIR) : new File(ST_RESULTS_DIR);
 
@@ -133,7 +156,8 @@ public class Evaluate {
     Function<Scenario, Scenario> conv =
       realtime ? null : ScenarioConverter.TO_ONLINE_SIMULATED_250;
     execute(programs, realtime, files, resDir, true, conv, true, reauctOpt,
-      objectiveFunction, rpOpt, expArgs);
+      objectiveFunction, rpOpt, enableTimeMeasurements, enableTimeMeasurements,
+      expArgs);
 
   }
 
@@ -149,6 +173,8 @@ public class Evaluate {
       ReauctOpt reauctOpt,
       Gendreau06ObjectiveFunction objFuncUsedAtRuntime,
       RpOpt routePlanner,
+      boolean enableTimeMeasurements,
+      boolean addOptaPlannerMAS,
       String... expArgs) {
     checkArgument(realtime ^ scenarioConverter != null);
     final long startTime = System.currentTimeMillis();
@@ -169,7 +195,7 @@ public class Evaluate {
       .showGui(GPEM17.gui())
       .showGui(false)
       .usePostProcessor(
-        new LogProcessor(GPEM17.OBJ_FUNC, evolution
+        new GpemPostProcessor(GPEM17.OBJ_FUNC, evolution
           ? FailureStrategy.INCLUDE : FailureStrategy.RETRY, false))
       .computeLocal()
       .withRandomSeed(123)
@@ -202,6 +228,10 @@ public class Evaluate {
         ScenarioIO.readerAdapter(scenarioConverter));
     }
 
+    if (addOptaPlannerMAS) {
+      exp.addConfiguration(createOptaPlanner(enableTimeMeasurements));
+    }
+
     int counter = 0;
     StringBuilder sb = new StringBuilder();
     for (GPProgram<GpGlobal> prog : programs) {
@@ -214,12 +244,13 @@ public class Evaluate {
       if (realtime) {
         exp.addConfiguration(
           GPEM17.createRtConfig(prog, progId, reauctOpt, objFuncUsedAtRuntime,
-            routePlanner));
+            routePlanner, enableTimeMeasurements));
       } else {
         exp.addConfiguration(
-          GPEM17.createStConfig(prog, progId, reauctOpt, objFuncUsedAtRuntime));
+          GPEM17.createStConfig(prog, progId, reauctOpt, objFuncUsedAtRuntime,
+            enableTimeMeasurements));
       }
-    };
+    }
 
     try {
       Files.write(sb, new File(rw.getExperimentDirectory(), "configs.txt"),
@@ -240,6 +271,68 @@ public class Evaluate {
       + " simulations in " + duration / 1000d + "s ("
       + PeriodFormat.getDefault().print(dur.toPeriod()) + ")");
     return results.get();
+  }
+
+  /**
+   * @param enableTimeMeasurements
+   * @return
+   */
+  private static MASConfiguration createOptaPlanner(
+      boolean enableTimeMeasurements) {
+
+    final long rpMs = 2500L;
+    final long bMs = 100L;
+    final BidFunction bf = BidFunctions.BALANCED_HIGH;
+    final String masSolverName =
+      "Step-counting-hill-climbing-with-entity-tabu-and-strategic-oscillation";
+
+    OptaplannerSolvers.Builder b = OptaplannerSolvers.builder()
+      .withSolverXmlResource("com/github/rinde/jaamas16/jaamas-solver.xml")
+      .withObjectiveFunction(GPEM17.OBJ_FUNC)
+      .withName(masSolverName);
+
+    MASConfiguration.Builder builder = MASConfiguration.pdptwBuilder()
+      .setName(
+        "ReAuction-FFD-" + masSolverName + "-RP-" + rpMs + "-BID-" + bMs
+          + "-" + bf)
+      .addEventHandler(AddVehicleEvent.class,
+        DefaultTruckFactory.builder()
+          .setRoutePlanner(
+            // RtSolverRoutePlanner.supplier(RtStAdapters.toRealtime(
+            // CheapestInsertionHeuristic.supplier(GPEM17.OBJ_FUNC)))
+
+            RtSolverRoutePlanner.supplier(
+              b.withUnimprovedMsLimit(rpMs)
+                .buildRealtimeSolverSupplier())
+    //
+    )
+          .setCommunicator(RtSolverBidder.realtimeBuilder(GPEM17.OBJ_FUNC,
+            b.withUnimprovedMsLimit(bMs)
+              .withTimeMeasurementsEnabled(enableTimeMeasurements)
+              .buildRealtimeSolverSupplier())
+            .withBidFunction(bf)
+            .withReauctionCooldownPeriod(0))
+
+          .setLazyComputation(false)
+          .setRouteAdjuster(RouteFollowingVehicle.delayAdjuster())
+          .build())
+      .addModel(AuctionCommModel.builder(DoubleBid.class)
+        .withStopCondition(
+          AuctionStopConditions.and(
+            AuctionStopConditions.<DoubleBid>atLeastNumBids(2),
+            AuctionStopConditions.<DoubleBid>or(
+              AuctionStopConditions.<DoubleBid>allBidders(),
+              AuctionStopConditions.<DoubleBid>maxAuctionDuration(5000))))
+        .withMaxAuctionDuration(30 * 60 * 1000L))
+      .addModel(RtSolverModel.builder()
+        .withThreadPoolSize(3)
+        .withThreadGrouping(true))
+      .addModel(RealtimeClockLogger.builder());
+
+    if (enableTimeMeasurements) {
+      builder.addModel(AuctionTimeStatsLogger.builder());
+    }
+    return builder.build();
   }
 
   static File createExperimentDir(File target) {
@@ -274,8 +367,7 @@ public class Evaluate {
         return Scenario.builder(s)
           .removeModelsOfType(TimeModel.AbstractBuilder.class)
           .addModel(TimeModel.builder().withTickLength(250).withRealTime())
-          .setStopCondition(s.getStopCondition())
-          .build();
+          .setStopCondition(s.getStopCondition()).build();
       }
     },
     TO_ONLINE_SIMULATED_250 {

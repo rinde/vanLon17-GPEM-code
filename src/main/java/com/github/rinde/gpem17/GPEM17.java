@@ -18,6 +18,7 @@ package com.github.rinde.gpem17;
 import com.github.rinde.ecj.PriorityHeuristic;
 import com.github.rinde.evo4mas.common.EvoBidder;
 import com.github.rinde.evo4mas.common.GpGlobal;
+import com.github.rinde.gpem17.eval.AuctionTimeStatsLogger;
 import com.github.rinde.logistics.pdptw.mas.TruckFactory.DefaultTruckFactory;
 import com.github.rinde.logistics.pdptw.mas.comm.AuctionCommModel;
 import com.github.rinde.logistics.pdptw.mas.comm.AuctionPanel;
@@ -82,7 +83,8 @@ public class GPEM17 {
       StochasticSupplier<? extends RoutePlanner> rp,
       StochasticSupplier<? extends Communicator> cm,
       boolean rt,
-      String name) {
+      String name,
+      boolean enableTimeMeasurements) {
     MASConfiguration.Builder builder = MASConfiguration.pdptwBuilder()
       .setName(name)
       .addEventHandler(AddVehicleEvent.class,
@@ -110,6 +112,10 @@ public class GPEM17 {
     } else {
       builder.addModel(SolverModel.builder());
     }
+    if (enableTimeMeasurements) {
+      builder.addModel(AuctionTimeStatsLogger.builder());
+    }
+
     // .addEventHandler(AddParcelEvent.class, AddParcelEvent.namedHandler())
     return builder.build();
   }
@@ -151,9 +157,11 @@ public class GPEM17 {
       String id,
       ReauctOpt reauctOpt,
       Gendreau06ObjectiveFunction objFunc,
-      RpOpt rpOpt) {
+      RpOpt rpOpt,
+      boolean enableTimeMeasurements) {
 
     EvoBidder.Builder cm = EvoBidder.realtimeBuilder(solver, objFunc)
+      .withTimeMeasurement(enableTimeMeasurements)
       .withReauctionCooldownPeriod(60000);
 
     if (reauctOpt == ReauctOpt.CIH) {
@@ -163,17 +171,20 @@ public class GPEM17 {
     }
     String name =
       "RTMAS-RP-" + rpOpt.name() + "-BID-EVO-REAUCT-" + reauctOpt + "-" + id;
-    return createConfig(solver, rpOpt.create(), cm, true, name);
+    return createConfig(solver, rpOpt.create(), cm, true, name,
+      enableTimeMeasurements);
   }
 
   public static MASConfiguration createStConfig(
       PriorityHeuristic<GpGlobal> solver,
       String id, ReauctOpt reauctOpt,
-      Gendreau06ObjectiveFunction objFunc) {
+      Gendreau06ObjectiveFunction objFunc,
+      boolean enableTimeMeasurements) {
     StochasticSupplier<RoutePlanner> rp =
       RtSolverRoutePlanner.simulatedTimeSupplier(
         CheapestInsertionHeuristic.supplier(objFunc));
     EvoBidder.Builder cm = EvoBidder.simulatedTimeBuilder(solver, objFunc)
+      .withTimeMeasurement(enableTimeMeasurements)
       .withReauctionCooldownPeriod(60000);
 
     if (reauctOpt == ReauctOpt.CIH) {
@@ -182,7 +193,7 @@ public class GPEM17 {
       cm = cm.withPriorityHeuristicForReauction();
     }
     String name = "STMAS-RP-CIH-BID-EVO-REAUCT-" + reauctOpt + "-" + id;
-    return createConfig(solver, rp, cm, false, name);
+    return createConfig(solver, rp, cm, false, name, enableTimeMeasurements);
   }
 
   public static Gendreau06ObjectiveFunction parseObjFuncWeights(

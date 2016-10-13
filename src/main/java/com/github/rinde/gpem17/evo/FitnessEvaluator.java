@@ -238,6 +238,8 @@ public class FitnessEvaluator extends BaseEvaluator {
       reauctOpt,
       objectiveFunction,
       null,
+      false,
+      false,
       args);
 
     Map<MASConfiguration, GPNodeHolder> configMapping = new LinkedHashMap<>();
