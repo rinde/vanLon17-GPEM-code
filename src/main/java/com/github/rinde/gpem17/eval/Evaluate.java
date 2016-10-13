@@ -48,8 +48,10 @@ import com.github.rinde.logistics.pdptw.mas.comm.RtSolverBidder;
 import com.github.rinde.logistics.pdptw.mas.comm.RtSolverBidder.BidFunction;
 import com.github.rinde.logistics.pdptw.mas.comm.RtSolverBidder.BidFunctions;
 import com.github.rinde.logistics.pdptw.mas.route.RtSolverRoutePlanner;
+import com.github.rinde.logistics.pdptw.solver.CheapestInsertionHeuristic;
 import com.github.rinde.logistics.pdptw.solver.optaplanner.OptaplannerSolvers;
 import com.github.rinde.rinsim.central.rt.RtSolverModel;
+import com.github.rinde.rinsim.central.rt.RtStAdapters;
 import com.github.rinde.rinsim.core.model.time.RealtimeClockLogger;
 import com.github.rinde.rinsim.core.model.time.TimeModel;
 import com.github.rinde.rinsim.experiment.CommandLineProgress;
@@ -298,12 +300,12 @@ public class Evaluate {
       .addEventHandler(AddVehicleEvent.class,
         DefaultTruckFactory.builder()
           .setRoutePlanner(
-            // RtSolverRoutePlanner.supplier(RtStAdapters.toRealtime(
-            // CheapestInsertionHeuristic.supplier(GPEM17.OBJ_FUNC)))
+            RtSolverRoutePlanner.supplier(RtStAdapters.toRealtime(
+              CheapestInsertionHeuristic.supplier(GPEM17.OBJ_FUNC)))
 
-            RtSolverRoutePlanner.supplier(
-              b.withUnimprovedMsLimit(rpMs)
-                .buildRealtimeSolverSupplier())
+    // RtSolverRoutePlanner.supplier(
+    // b.withUnimprovedMsLimit(rpMs)
+    // .buildRealtimeSolverSupplier())
     //
     )
           .setCommunicator(RtSolverBidder.realtimeBuilder(GPEM17.OBJ_FUNC,

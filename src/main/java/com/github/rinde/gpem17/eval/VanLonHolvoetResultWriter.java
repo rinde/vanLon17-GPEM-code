@@ -26,7 +26,6 @@ import java.util.Map;
 
 import com.github.rinde.logistics.pdptw.mas.comm.AuctionCommModel.AuctionEvent;
 import com.github.rinde.logistics.pdptw.mas.comm.Bidder;
-import com.github.rinde.rinsim.central.GlobalStateObjects;
 import com.github.rinde.rinsim.central.Solvers.SolverTimeMeasurement;
 import com.github.rinde.rinsim.experiment.Experiment.SimArgs;
 import com.github.rinde.rinsim.experiment.Experiment.SimulationResult;
@@ -84,8 +83,6 @@ public class VanLonHolvoetResultWriter extends ResultWriter {
     }
     final RtExperimentInfo info = (RtExperimentInfo) result.getResultObject();
 
-    System.out.println(info.getAuctionEvents().isEmpty() + " " +
-      info.getTimeMeasurements().isEmpty());
     if (!info.getAuctionEvents().isEmpty()
       && !info.getTimeMeasurements().isEmpty()) {
 
@@ -127,10 +124,12 @@ public class VanLonHolvoetResultWriter extends ResultWriter {
         List<SolverTimeMeasurement> ms = measurements.get(bidder);
         for (SolverTimeMeasurement m : ms) {
 
-          int available = m.input().getAvailableParcels().size();
-          int total = GlobalStateObjects.allParcels(m.input()).size();
-          int pickedUp = total - available;
-          int routeLength = (available * 2) + pickedUp;
+          // int available = m.input().getAvailableParcels().size();
+          // int total = GlobalStateObjects.allParcels(m.input()).size();
+          // int pickedUp = total - available;
+          // (available * 2) + pickedUp;
+          int routeLength =
+            m.input().getVehicles().get(0).getRoute().get().size();
 
           Joiner.on(",").appendTo(compContents,
             bidderId,
