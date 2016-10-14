@@ -158,10 +158,12 @@ public class GPEM17 {
       ReauctOpt reauctOpt,
       Gendreau06ObjectiveFunction objFunc,
       RpOpt rpOpt,
-      boolean enableTimeMeasurements) {
+      boolean enableTimeMeasurements,
+      long computationDelay) {
 
     EvoBidder.Builder cm = EvoBidder.realtimeBuilder(solver, objFunc)
       .withTimeMeasurement(enableTimeMeasurements)
+      .withComputationDelay(computationDelay)
       .withReauctionCooldownPeriod(60000);
 
     if (reauctOpt == ReauctOpt.CIH) {

@@ -25,6 +25,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
 
@@ -141,11 +143,25 @@ public class Evaluate {
       "The fifth argument should be 'EnableTimeMeasurements' or "
         + "'DisableTimeMeasurements', found '%s'.",
       args[5]);
-
     boolean enableTimeMeasurements = args[5].equals("EnableTimeMeasurements");
 
-    final String[] expArgs = new String[args.length - 6];
-    System.arraycopy(args, 6, expArgs, 0, args.length - 6);
+    Pattern compDelayRegex = Pattern.compile("heuristic-comp-delay:(\\d+)ms");
+    Matcher matcher = compDelayRegex.matcher(args[6]);
+    checkArgument(args.length >= 7 && matcher.matches(),
+      "The sixth argument should match regex: '%s'.", compDelayRegex.pattern());
+    long heuristicCompDelay = Long.parseLong(matcher.group(1));
+
+    Pattern optaPlannerRegex =
+      Pattern.compile("run-optaplanner-mas:(true|false)");
+    Matcher optaPlannerMatcher = optaPlannerRegex.matcher(args[7]);
+    checkArgument(args.length >= 8 && optaPlannerMatcher.matches(),
+      "The seventh argument should match regex: '%s'.",
+      optaPlannerRegex.pattern());
+    boolean useOptaPlannerMAS =
+      Boolean.parseBoolean(optaPlannerMatcher.group(1));
+
+    final String[] expArgs = new String[args.length - 8];
+    System.arraycopy(args, 8, expArgs, 0, args.length - 8);
     File resDir =
       realtime ? new File(RT_RESULTS_DIR) : new File(ST_RESULTS_DIR);
 
@@ -156,7 +172,8 @@ public class Evaluate {
     Function<Scenario, Scenario> conv =
       realtime ? null : ScenarioConverter.TO_ONLINE_SIMULATED_250;
     execute(programs, realtime, files, resDir, true, conv, true, reauctOpt,
-      objectiveFunction, rpOpt, enableTimeMeasurements, enableTimeMeasurements,
+      objectiveFunction, rpOpt, enableTimeMeasurements, useOptaPlannerMAS,
+      heuristicCompDelay,
       expArgs);
 
   }
@@ -175,6 +192,7 @@ public class Evaluate {
       RpOpt routePlanner,
       boolean enableTimeMeasurements,
       boolean addOptaPlannerMAS,
+      long heuristicComputationDelay,
       String... expArgs) {
     checkArgument(realtime ^ scenarioConverter != null);
     final long startTime = System.currentTimeMillis();
@@ -244,7 +262,7 @@ public class Evaluate {
       if (realtime) {
         exp.addConfiguration(
           GPEM17.createRtConfig(prog, progId, reauctOpt, objFuncUsedAtRuntime,
-            routePlanner, enableTimeMeasurements));
+            routePlanner, enableTimeMeasurements, heuristicComputationDelay));
       } else {
         exp.addConfiguration(
           GPEM17.createStConfig(prog, progId, reauctOpt, objFuncUsedAtRuntime,

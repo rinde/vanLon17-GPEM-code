@@ -106,6 +106,7 @@ public class CihReference {
       null,
       false,
       false,
+      0,
       new String[] {"--repetitions", "1"});
 
     File statsLog = new File(resDir, "best-stats.csv");
