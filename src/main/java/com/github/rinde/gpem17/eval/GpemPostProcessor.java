@@ -30,7 +30,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableListMultimap;
 
 class GpemPostProcessor
-    implements PostProcessor<RtExperimentInfo>, Serializable {
+    implements PostProcessor<SimResult>, Serializable {
   static final Logger LOGGER = LoggerFactory.getLogger(GpemPostProcessor.class);
 
   private static final long serialVersionUID = 5997690791395717045L;
@@ -46,7 +46,7 @@ class GpemPostProcessor
   }
 
   @Override
-  public RtExperimentInfo collectResults(Simulator sim, SimArgs args) {
+  public SimResult collectResults(Simulator sim, SimArgs args) {
     // sim stats should always be present
     final StatisticsDTO stats =
       sim.getModelProvider().getModel(StatsTracker.class).getStatistics();
@@ -92,7 +92,7 @@ class GpemPostProcessor
     final RealtimeClockLogger logger =
       sim.getModelProvider().tryGetModel(RealtimeClockLogger.class);
     if (logger == null) {
-      return RtExperimentInfo.create(new ArrayList<LogEntry>(),
+      return SimResult.create(new ArrayList<LogEntry>(),
         0,
         sim.getCurrentTime() / sim.getTimeStep(),
         stats,
@@ -102,7 +102,7 @@ class GpemPostProcessor
         timeMeasurements);
     }
 
-    return RtExperimentInfo.create(logger.getLog(), logger.getRtCount(),
+    return SimResult.create(logger.getLog(), logger.getRtCount(),
       logger.getStCount(), stats, logger.getTickInfoList(), aStats,
       finishEvents, timeMeasurements);
   }

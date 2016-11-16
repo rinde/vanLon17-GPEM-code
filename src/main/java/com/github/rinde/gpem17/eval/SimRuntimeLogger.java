@@ -80,8 +80,8 @@ public class SimRuntimeLogger implements ResultListener {
     long sum = 0;
     double[] arr = new double[receivedResults.size()];
     for (int i = 0; i < receivedResults.size(); i++) {
-      RtExperimentInfo info =
-        (RtExperimentInfo) receivedResults.get(i).getResultObject();
+      SimResult info =
+        (SimResult) receivedResults.get(i).getResultObject();
       sum += info.getStats().computationTime;
       arr[i] = info.getStats().computationTime;
     }

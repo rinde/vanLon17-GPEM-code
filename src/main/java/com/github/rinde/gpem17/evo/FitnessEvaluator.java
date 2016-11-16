@@ -39,7 +39,7 @@ import com.github.rinde.evo4mas.common.GpGlobal;
 import com.github.rinde.gpem17.GPEM17;
 import com.github.rinde.gpem17.GPEM17.ReauctOpt;
 import com.github.rinde.gpem17.eval.Evaluate;
-import com.github.rinde.gpem17.eval.RtExperimentInfo;
+import com.github.rinde.gpem17.eval.SimResult;
 import com.github.rinde.rinsim.core.model.time.TimeModel;
 import com.github.rinde.rinsim.experiment.Experiment.SimulationResult;
 import com.github.rinde.rinsim.experiment.ExperimentResults;
@@ -255,7 +255,7 @@ public class FitnessEvaluator extends BaseEvaluator {
     List<GPComputationResult> convertedResults = new ArrayList<>();
     for (SimulationResult sr : results.getResults()) {
       StatisticsDTO stats =
-        ((RtExperimentInfo) sr.getResultObject()).getStats();
+        ((SimResult) sr.getResultObject()).getStats();
       double cost = objectiveFunction.computeCost(stats);
       float fitness = (float) cost;
       if (!objectiveFunction.isValidResult(stats)) {

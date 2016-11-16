@@ -209,8 +209,8 @@ abstract class ResultWriter implements ResultListener {
   }
 
   static void appendTimeLogSummary(SimulationResult sr, File target) {
-    if (sr.getResultObject() instanceof RtExperimentInfo) {
-      final RtExperimentInfo info = (RtExperimentInfo) sr.getResultObject();
+    if (sr.getResultObject() instanceof SimResult) {
+      final SimResult info = (SimResult) sr.getResultObject();
 
       final int tickInfoListSize = info.getTickInfoList().size();
       long sumIatNs = 0;
@@ -266,7 +266,7 @@ abstract class ResultWriter implements ResultListener {
         .put(OutputFields.NUM_UNSUC_REAUCTIONS, -1)
         .put(OutputFields.NUM_FAILED_REAUCTIONS, -1);
     } else {
-      final RtExperimentInfo ei = (RtExperimentInfo) sr.getResultObject();
+      final SimResult ei = (SimResult) sr.getResultObject();
       final StatisticsDTO stats = ei.getStats();
       map.put(OutputFields.COST, objFunc.computeCost(stats))
         .put(OutputFields.TRAVEL_TIME, objFunc.travelTime(stats))
@@ -308,7 +308,7 @@ abstract class ResultWriter implements ResultListener {
   }
 
   static void createTimeLog(SimulationResult sr, File experimentDir) {
-    if (!(sr.getResultObject() instanceof RtExperimentInfo)) {
+    if (!(sr.getResultObject() instanceof SimResult)) {
       return;
     }
     final SimArgs simArgs = sr.getSimArgs();
@@ -322,7 +322,7 @@ abstract class ResultWriter implements ResultListener {
       simArgs.getRepetition());
 
     final File iatFile = new File(experimentDir, id + "-interarrivaltimes.csv");
-    final RtExperimentInfo info = (RtExperimentInfo) sr.getResultObject();
+    final SimResult info = (SimResult) sr.getResultObject();
     try (FileWriter writer = new FileWriter(iatFile)) {
       iatFile.createNewFile();
       for (final RealtimeTickInfo md : info.getTickInfoList()) {

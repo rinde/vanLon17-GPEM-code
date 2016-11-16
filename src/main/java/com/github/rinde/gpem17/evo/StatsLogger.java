@@ -34,7 +34,7 @@ import com.github.rinde.ecj.GPComputationResult;
 import com.github.rinde.ecj.GPStats;
 import com.github.rinde.gpem17.AuctionStats;
 import com.github.rinde.gpem17.GPEM17;
-import com.github.rinde.gpem17.eval.RtExperimentInfo;
+import com.github.rinde.gpem17.eval.SimResult;
 import com.github.rinde.gpem17.evo.FitnessEvaluator.Properties;
 import com.github.rinde.rinsim.experiment.Experiment.SimulationResult;
 import com.github.rinde.rinsim.pdptw.common.StatisticsDTO;
@@ -121,7 +121,7 @@ public class StatsLogger extends GPStats {
       String generationId) {
     StringBuilder sb = new StringBuilder();
     for (SimulationResult sr : results) {
-      RtExperimentInfo ro = (RtExperimentInfo) sr.getResultObject();
+      SimResult ro = (SimResult) sr.getResultObject();
       StatisticsDTO stats = ro.getStats();
 
       final String pc = sr.getSimArgs().getScenario().getProblemClass().getId();

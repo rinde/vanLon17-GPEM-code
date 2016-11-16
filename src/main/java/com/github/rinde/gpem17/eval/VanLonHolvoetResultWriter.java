@@ -78,10 +78,10 @@ public class VanLonHolvoetResultWriter extends ResultWriter {
   }
 
   void writeBidComputationTimeMeasurements(SimulationResult result) {
-    if (!(result.getResultObject() instanceof RtExperimentInfo)) {
+    if (!(result.getResultObject() instanceof SimResult)) {
       return;
     }
-    final RtExperimentInfo info = (RtExperimentInfo) result.getResultObject();
+    final SimResult info = (SimResult) result.getResultObject();
 
     if (!info.getAuctionEvents().isEmpty()
       && !info.getTimeMeasurements().isEmpty()) {

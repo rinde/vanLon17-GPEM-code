@@ -16,10 +16,10 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableListMultimap;
 
 @AutoValue
-public abstract class RtExperimentInfo implements Serializable {
+public abstract class SimResult implements Serializable {
   private static final long serialVersionUID = 6324066851233398736L;
 
-  RtExperimentInfo() {}
+  SimResult() {}
 
   abstract List<LogEntry> getLog();
 
@@ -37,12 +37,12 @@ public abstract class RtExperimentInfo implements Serializable {
 
   abstract ImmutableListMultimap<Bidder<?>, SolverTimeMeasurement> getTimeMeasurements();
 
-  static RtExperimentInfo create(List<LogEntry> log, long rt, long st,
+  static SimResult create(List<LogEntry> log, long rt, long st,
       StatisticsDTO stats, ImmutableList<RealtimeTickInfo> dev,
       Optional<AuctionStats> aStats,
       ImmutableList<AuctionEvent> auctionEvents,
       ImmutableListMultimap<Bidder<?>, SolverTimeMeasurement> timeMeasurements) {
-    return new AutoValue_RtExperimentInfo(log, rt, st, stats, dev, aStats,
+    return new AutoValue_SimResult(log, rt, st, stats, dev, aStats,
       auctionEvents, timeMeasurements);
   }
 }
