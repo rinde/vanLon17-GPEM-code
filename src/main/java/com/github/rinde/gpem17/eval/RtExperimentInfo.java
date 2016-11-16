@@ -6,7 +6,7 @@ import java.util.List;
 import com.github.rinde.gpem17.AuctionStats;
 import com.github.rinde.logistics.pdptw.mas.comm.AuctionCommModel.AuctionEvent;
 import com.github.rinde.logistics.pdptw.mas.comm.Bidder;
-import com.github.rinde.rinsim.central.Solvers.SolverTimeMeasurement;
+import com.github.rinde.rinsim.central.SolverTimeMeasurement;
 import com.github.rinde.rinsim.core.model.time.RealtimeClockLogger.LogEntry;
 import com.github.rinde.rinsim.core.model.time.RealtimeTickInfo;
 import com.github.rinde.rinsim.pdptw.common.StatisticsDTO;

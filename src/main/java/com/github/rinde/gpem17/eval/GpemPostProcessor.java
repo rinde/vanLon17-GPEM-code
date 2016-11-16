@@ -12,9 +12,10 @@ import org.slf4j.LoggerFactory;
 
 import com.github.rinde.gpem17.AuctionStats;
 import com.github.rinde.logistics.pdptw.mas.comm.AuctionCommModel;
+import com.github.rinde.logistics.pdptw.mas.comm.AuctionTimeStatsLogger;
 import com.github.rinde.logistics.pdptw.mas.comm.AuctionCommModel.AuctionEvent;
 import com.github.rinde.logistics.pdptw.mas.comm.Bidder;
-import com.github.rinde.rinsim.central.Solvers.SolverTimeMeasurement;
+import com.github.rinde.rinsim.central.SolverTimeMeasurement;
 import com.github.rinde.rinsim.core.Simulator;
 import com.github.rinde.rinsim.core.model.time.RealtimeClockLogger;
 import com.github.rinde.rinsim.core.model.time.RealtimeClockLogger.LogEntry;
@@ -79,7 +80,9 @@ class GpemPostProcessor
     ImmutableListMultimap<Bidder<?>, SolverTimeMeasurement> timeMeasurements;
     if (auctionLogger != null) {
       finishEvents = auctionLogger.getAuctionFinishEvents();
-      timeMeasurements = auctionLogger.getTimeMeasurements();
+      timeMeasurements =
+        (ImmutableListMultimap<Bidder<?>, SolverTimeMeasurement>) auctionLogger
+          .getTimeMeasurements();
     } else {
       finishEvents = ImmutableList.of();
       timeMeasurements = ImmutableListMultimap.of();

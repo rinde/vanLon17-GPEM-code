@@ -45,6 +45,7 @@ import com.github.rinde.gpem17.evo.FunctionSet;
 import com.github.rinde.logistics.pdptw.mas.TruckFactory.DefaultTruckFactory;
 import com.github.rinde.logistics.pdptw.mas.comm.AuctionCommModel;
 import com.github.rinde.logistics.pdptw.mas.comm.AuctionStopConditions;
+import com.github.rinde.logistics.pdptw.mas.comm.AuctionTimeStatsLogger;
 import com.github.rinde.logistics.pdptw.mas.comm.DoubleBid;
 import com.github.rinde.logistics.pdptw.mas.comm.RtSolverBidder;
 import com.github.rinde.logistics.pdptw.mas.comm.RtSolverBidder.BidFunction;

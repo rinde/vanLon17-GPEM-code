@@ -26,7 +26,7 @@ import java.util.Map;
 
 import com.github.rinde.logistics.pdptw.mas.comm.AuctionCommModel.AuctionEvent;
 import com.github.rinde.logistics.pdptw.mas.comm.Bidder;
-import com.github.rinde.rinsim.central.Solvers.SolverTimeMeasurement;
+import com.github.rinde.rinsim.central.SolverTimeMeasurement;
 import com.github.rinde.rinsim.experiment.Experiment.SimArgs;
 import com.github.rinde.rinsim.experiment.Experiment.SimulationResult;
 import com.github.rinde.rinsim.scenario.Scenario;
