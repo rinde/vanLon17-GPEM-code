@@ -384,14 +384,14 @@ public class Evaluate {
       .addEventHandler(AddVehicleEvent.class,
         DefaultTruckFactory.builder()
           .setRoutePlanner(RtSolverRoutePlanner.supplier(
-            opFfdFactory.withSolverKey(masSolverName)
+            opFfdFactory // .withSolverKey(masSolverName)
               .withUnimprovedMsLimit(rpMs)
               .withTimeMeasurementsEnabled(computationsLogging)
               .buildRealtimeSolverSupplier()))
           .setCommunicator(
 
             RtSolverBidder.realtimeBuilder(objFunc,
-              opFfdFactory.withSolverKey(masSolverName)
+              opFfdFactory // .withSolverKey(masSolverName)
                 .withUnimprovedMsLimit(bMs)
                 .withTimeMeasurementsEnabled(computationsLogging)
                 .buildRealtimeSolverSupplier())
