@@ -50,6 +50,7 @@ import com.github.rinde.logistics.pdptw.mas.comm.DoubleBid;
 import com.github.rinde.logistics.pdptw.mas.comm.RtSolverBidder;
 import com.github.rinde.logistics.pdptw.mas.comm.RtSolverBidder.BidFunction;
 import com.github.rinde.logistics.pdptw.mas.comm.RtSolverBidder.BidFunctions;
+import com.github.rinde.logistics.pdptw.mas.route.RoutePlannerStatsLogger;
 import com.github.rinde.logistics.pdptw.mas.route.RtSolverRoutePlanner;
 import com.github.rinde.logistics.pdptw.solver.optaplanner.OptaplannerSolvers;
 import com.github.rinde.rinsim.central.rt.RtSolverModel;
@@ -63,6 +64,7 @@ import com.github.rinde.rinsim.experiment.PostProcessor.FailureStrategy;
 import com.github.rinde.rinsim.experiment.SimulationProperty;
 import com.github.rinde.rinsim.io.FileProvider;
 import com.github.rinde.rinsim.pdptw.common.AddVehicleEvent;
+import com.github.rinde.rinsim.pdptw.common.ObjectiveFunction;
 import com.github.rinde.rinsim.pdptw.common.RouteFollowingVehicle;
 import com.github.rinde.rinsim.scenario.Scenario;
 import com.github.rinde.rinsim.scenario.ScenarioIO;
@@ -299,9 +301,10 @@ public class Evaluate {
   private static MASConfiguration createOptaPlanner(
       boolean enableTimeMeasurements) {
 
-    final long rpMs = 2500L;
-    final long bMs = 100L;
-    final BidFunction bf = BidFunctions.BALANCED_HIGH;
+    // using settings from JAAMAS paper
+    final long rpMs = 100L;
+    final long bMs = 20L;
+    final long maxAuctionDurationSoft = 10000L;
     final String masSolverName =
       "Step-counting-hill-climbing-with-entity-tabu-and-strategic-oscillation";
 
@@ -310,28 +313,91 @@ public class Evaluate {
       .withObjectiveFunction(GPEM17.OBJ_FUNC)
       .withName(masSolverName);
 
-    MASConfiguration.Builder builder = MASConfiguration.pdptwBuilder()
+    return createMAS(b, GPEM17.OBJ_FUNC, rpMs, bMs, maxAuctionDurationSoft,
+      false, 0L, enableTimeMeasurements);
+
+    // MASConfiguration.Builder builder = MASConfiguration.pdptwBuilder()
+    // .setName(
+    // "ReAuction-FFD-" + masSolverName + "-RP-" + rpMs + "-BID-" + bMs
+    // + "-" + bf)
+    // .addEventHandler(AddVehicleEvent.class,
+    // DefaultTruckFactory.builder()
+    // .setRoutePlanner(
+    // // RtSolverRoutePlanner.supplier(RtStAdapters.toRealtime(
+    // // CheapestInsertionHeuristic.supplier(GPEM17.OBJ_FUNC)))
+    //
+    // RtSolverRoutePlanner.supplier(
+    // b.withUnimprovedMsLimit(rpMs)
+    // .buildRealtimeSolverSupplier())
+    // //
+    // )
+    // .setCommunicator(RtSolverBidder.realtimeBuilder(GPEM17.OBJ_FUNC,
+    // b.withUnimprovedMsLimit(bMs)
+    // .withTimeMeasurementsEnabled(enableTimeMeasurements)
+    // .buildRealtimeSolverSupplier())
+    // .withBidFunction(bf)
+    // .withReauctionCooldownPeriod(0))
+    //
+    // .setLazyComputation(false)
+    // .setRouteAdjuster(RouteFollowingVehicle.delayAdjuster())
+    // .build())
+    // .addModel(AuctionCommModel.builder(DoubleBid.class)
+    // .withStopCondition(
+    // AuctionStopConditions.and(
+    // AuctionStopConditions.<DoubleBid>atLeastNumBids(2),
+    // AuctionStopConditions.<DoubleBid>or(
+    // AuctionStopConditions.<DoubleBid>allBidders(),
+    // AuctionStopConditions.<DoubleBid>maxAuctionDuration(5000))))
+    // .withMaxAuctionDuration(30 * 60 * 1000L))
+    // .addModel(RtSolverModel.builder()
+    // .withThreadPoolSize(3)
+    // .withThreadGrouping(true))
+    // .addModel(RealtimeClockLogger.builder());
+    //
+    // if (enableTimeMeasurements) {
+    // builder.addModel(AuctionTimeStatsLogger.builder());
+    // }
+    // return builder.build();
+  }
+
+  static MASConfiguration createMAS(OptaplannerSolvers.Builder opFfdFactory,
+      ObjectiveFunction objFunc, long rpMs, long bMs,
+      long maxAuctionDurationSoft, boolean enableReauctions,
+      long reauctCooldownPeriodMs, boolean computationsLogging) {
+    final BidFunction bf = BidFunctions.BALANCED_HIGH;
+    final String masSolverName =
+      "Step-counting-hill-climbing-with-entity-tabu-and-strategic-oscillation";
+
+    final String suffix;
+    if (false == enableReauctions) {
+      suffix = "-NO-REAUCT";
+    } else if (reauctCooldownPeriodMs > 0) {
+      suffix = "-reauctCooldownPeriod-" + reauctCooldownPeriodMs;
+    } else {
+      suffix = "";
+    }
+
+    MASConfiguration.Builder b = MASConfiguration.pdptwBuilder()
       .setName(
-        "ReAuction-FFD-" + masSolverName + "-RP-" + rpMs + "-BID-" + bMs
-          + "-" + bf)
+        "ReAuction-FFD-" + masSolverName + "-RP-" + rpMs + "-BID-" + bMs + "-"
+          + bf + suffix)
       .addEventHandler(AddVehicleEvent.class,
         DefaultTruckFactory.builder()
-          .setRoutePlanner(
-            // RtSolverRoutePlanner.supplier(RtStAdapters.toRealtime(
-            // CheapestInsertionHeuristic.supplier(GPEM17.OBJ_FUNC)))
+          .setRoutePlanner(RtSolverRoutePlanner.supplier(
+            opFfdFactory.withSolverKey(masSolverName)
+              .withUnimprovedMsLimit(rpMs)
+              .withTimeMeasurementsEnabled(computationsLogging)
+              .buildRealtimeSolverSupplier()))
+          .setCommunicator(
 
-            RtSolverRoutePlanner.supplier(
-              b.withUnimprovedMsLimit(rpMs)
+            RtSolverBidder.realtimeBuilder(objFunc,
+              opFfdFactory.withSolverKey(masSolverName)
+                .withUnimprovedMsLimit(bMs)
+                .withTimeMeasurementsEnabled(computationsLogging)
                 .buildRealtimeSolverSupplier())
-    //
-    )
-          .setCommunicator(RtSolverBidder.realtimeBuilder(GPEM17.OBJ_FUNC,
-            b.withUnimprovedMsLimit(bMs)
-              .withTimeMeasurementsEnabled(enableTimeMeasurements)
-              .buildRealtimeSolverSupplier())
-            .withBidFunction(bf)
-            .withReauctionCooldownPeriod(0))
-
+              .withBidFunction(bf)
+              .withReauctionsEnabled(enableReauctions)
+              .withReauctionCooldownPeriod(reauctCooldownPeriodMs))
           .setLazyComputation(false)
           .setRouteAdjuster(RouteFollowingVehicle.delayAdjuster())
           .build())
@@ -341,17 +407,20 @@ public class Evaluate {
             AuctionStopConditions.<DoubleBid>atLeastNumBids(2),
             AuctionStopConditions.<DoubleBid>or(
               AuctionStopConditions.<DoubleBid>allBidders(),
-              AuctionStopConditions.<DoubleBid>maxAuctionDuration(5000))))
+              AuctionStopConditions
+                .<DoubleBid>maxAuctionDuration(maxAuctionDurationSoft))))
         .withMaxAuctionDuration(30 * 60 * 1000L))
       .addModel(RtSolverModel.builder()
         .withThreadPoolSize(3)
         .withThreadGrouping(true))
       .addModel(RealtimeClockLogger.builder());
 
-    if (enableTimeMeasurements) {
-      builder.addModel(AuctionTimeStatsLogger.builder());
+    if (computationsLogging) {
+      b = b.addModel(AuctionTimeStatsLogger.builder())
+        .addModel(RoutePlannerStatsLogger.builder());
     }
-    return builder.build();
+
+    return b.build();
   }
 
   static File createExperimentDir(File target) {

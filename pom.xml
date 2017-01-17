@@ -25,8 +25,8 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<rinsim.version>4.3.0-SNAPSHOT</rinsim.version>
-		<rinlog.version>3.2.0-SNAPSHOT</rinlog.version>
+		<rinsim.version>4.3.0</rinsim.version>
+		<rinlog.version>3.2.0</rinlog.version>
 		<datgen.version>1.1.0</datgen.version>
 		<rinecj.version>0.2.0</rinecj.version>
 		<evo4mas.version>0.3.0-SNAPSHOT</evo4mas.version>
