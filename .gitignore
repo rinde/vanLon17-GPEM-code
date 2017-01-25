@@ -19,3 +19,5 @@ org.sonar.ide.eclipse.core.prefs
 *.log
 tmp*
 *.out
+*.png
+*.dot
