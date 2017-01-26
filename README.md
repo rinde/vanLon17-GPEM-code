@@ -4,6 +4,8 @@ This repository contains the code that was used to perform the experiments descr
 
  > *Optimizing agents with genetic programming - An evaluation of hyper-heuristics in dynamic real-time logistics.* Rinde R.S. van Lon, Juergen Branke, and Tom Holvoet. Genetic Programming and Evolvable Machines (2017).
 
+This repository is archived on Zenodo: [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.260130.svg)](https://doi.org/10.5281/zenodo.260130)
+
 The datasets and results belonging to this paper can be found at this location: 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.259774.svg)](https://doi.org/10.5281/zenodo.259774)
 
