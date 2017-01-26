@@ -11,17 +11,17 @@ Since the paper is part of a long term research effort, the code used for the ex
 
 ### In this repository
 
-This repository contains several scripts that can be used to execute each experiment conducted for this paper. Maven and Java 7 (or higher) are required.
+This repository contains several scripts that can be used to execute each experiment conducted for this paper. Maven and Java 7 (or higher) are required. Beware that some of the scripts below require extensive computational resources, see the paper for more details.
 
 | Purpose of script        							| Prerequisites 																		| Command 
 | ------------- 									| -------------																			| -------------
-| Generate train dataset. Generating all 90.000 train scenarios (in dataset10k) took about 36 minutes on a 24 core machine (fully utilizing all cores). The Java code can be found [here](src/main/java/com/github/rinde/gpem17/GenerateTrainDataset.java).							| 																						| ```./generate-train-dataset.sh'''
-| generate params 									|																						|
-| Perform evolution experiment 						| train dataset 																		|
-| Perform evaluation experiment 					| test dataset (LINK)																	|
-| time measuring experiment 						| test dataset																						| ```./time-measure-exp.sh'''
+| Generate train dataset. Generates all 90.000 train scenarios in ```files/dataset10k/```, this took about 36 minutes on a 24 core machine (fully utilizing all cores). The Java code can be found [here](src/main/java/com/github/rinde/gpem17/GenerateTrainDataset.java).	The data can also be downloaded TODO					| 																						| ```./generate-train-dataset.sh'''
+| Generate parameter files for evolution and tuning experiments. The files are written to ```files/config/experiments/``` and ```files/config/tuning-experiments/```. | 																			| ```./generate-params.sh'''
+| Perform evolution experiment. By default it starts a distributed experiment using the [JPPF framework](http://jppf.org/). For this to work, a JPPF server (version 4.1.3) needs to be running at localhost. If you want to run the experiment locally, you can change the parameter ```eval.distributed``` in ```files/config/gpem17common.params``` to ```false``` and generate new parameter files. | Requires train dataset in ```files/dataset10k/```. Requires  parameter files in ```files/config/experiments/```. 																		| ```./train-main.sh```
+| Perform evaluation experiment 					| test dataset (LINK)																	| ```./evaluate-main.sh```
+| Time measuring experiment 						| test dataset																						| ```./time-measure-exp.sh'''
 | Visualize heuristics, creates .png files for each heuristic in ```files/epxeriment-overview.csv``` and writes them to ```files/heuristics/```. 								| [Python](https://www.python.org/) (the script was developed using version 2.7.13rc1), ```dot``` part of [Graphviz](http://graphviz.org/) (version 2.38.0)						| ```./visualize-heuristics.sh'''
-| tuning experiment 								|																						|
+| Tuning experiment 								| Requires train dataset in ```files/dataset10k/```. Requires  parameter files in ```files/config/tuning-experiments/```.		| ```./train-tuning.sh```
 
 ### Java dependencies
 

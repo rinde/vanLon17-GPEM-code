@@ -8,6 +8,8 @@ files/dataset5000.tar
 files/dataset10k/
 files/dataset10k.tar
 files/train-dataset/
+files/config/experiments/
+files/config/tuning-experiments/
 example/src/main/java/rinde/sim/playground/
 .DS_Store
 target/
