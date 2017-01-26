@@ -1,4 +1,0 @@
-parent.0 = ../gpem17tuning-common.params
-
-seed.0 = 56862982
-eval.obj_func_weights = .5-1-1
